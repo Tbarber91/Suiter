@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents a user of the marketplace platform",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "handle": { "type": "string" }
+      },
+      "required": ["id", "name", "email"]
+    },
+    "Listing": {
+      "title": "Listing",
+      "description": "Represents a directory listing or product/shop/service posting in the marketplace",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["ad", "service", "product", "shop"] },
+        "price": { "type": "string" },
+        "image": { "type": "string" },
+        "rating": { "type": "number" },
+        "category": { "type": "string" },
+        "stock": { "type": "number" },
+        "externalUrl": { "type": "string" },
+        "isNew": { "type": "boolean" },
+        "phone": { "type": "string" },
+        "hours": { "type": "array" },
+        "ownerId": { "type": "string" },
+        "ownerName": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "title", "description", "type", "ownerId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles stored by uid"
+    },
+    "/listings/{listingId}": {
+      "schema": "Listing",
+      "description": "Marketplace directory listings and shops"
+    }
+  }
+}

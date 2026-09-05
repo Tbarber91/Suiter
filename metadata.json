@@ -1,0 +1,12 @@
+{
+  "name": "Suiter Marketplace",
+  "description": "A glossy marketplace for ads and services with map integration, user profiles, and AI features.",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone",
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

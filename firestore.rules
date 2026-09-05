@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Entity Validations
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'name', 'email'])
+        && data.id is string
+        && data.name is string && data.name.size() <= 200
+        && data.email is string && data.email.size() <= 200;
+    }
+
+    function isValidListing(data) {
+      return data.keys().hasAll(['id', 'title', 'description', 'type', 'ownerId'])
+        && data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() <= 150
+        && data.description is string && data.description.size() <= 4000
+        && data.type is string && (data.type == 'ad' || data.type == 'service' || data.type == 'product' || data.type == 'shop')
+        && data.ownerId is string && data.ownerId == request.auth.uid;
+    }
+
+    // Matches block user documents
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'email', 'avatarUrl', 'handle']);
+      allow delete: if isOwner(userId);
+    }
+
+    // Matches block directory listings
+    match /listings/{listingId} {
+      allow read: if true;
+      allow create: if isSignedIn() && isValidId(listingId) && isValidListing(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && isOwner(existing().ownerId) && isValidId(listingId) && isValidListing(incoming())
+        && incoming().ownerId == existing().ownerId
+        && (
+          // Allow full updates to descriptions, prices, storefronts, stock, etc.
+          incoming().diff(existing()).affectedKeys().hasAny(['title', 'description', 'price', 'image', 'rating', 'category', 'stock', 'externalUrl', 'isNew', 'phone', 'hours', 'reviews', 'updatedAt'])
+        );
+      allow delete: if isSignedIn() && isOwner(existing().ownerId);
+    }
+  }
+}

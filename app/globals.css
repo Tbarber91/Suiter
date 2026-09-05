@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #fcfcfc;
+  --color-foreground: #09090b;
+  
+  --color-muted: #f4f4f5;
+  --color-muted-foreground: #71717a;
+  
+  --color-primary: #18181b;
+  --color-primary-foreground: #fafafa;
+  
+  --color-secondary: #f4f4f5;
+  --color-secondary-foreground: #18181b;
+  
+  --color-border: #e4e4e7;
+  --color-input: #e4e4e7;
+  --color-ring: #a1a1aa;
+  
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+}
+
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-display);
+    --font-sans: var(--font-sans);
+    --font-mono: var(--font-mono);
+    
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+}
+
+:root {
+    --background: oklch(0.99 0 0);
+    --foreground: oklch(0.15 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.15 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.15 0 0);
+    --primary: oklch(0.15 0 0);
+    --primary-foreground: oklch(0.99 0 0);
+    --secondary: oklch(0.97 0.005 240);
+    --secondary-foreground: oklch(0.15 0 0);
+    --muted: oklch(0.97 0.005 240);
+    --muted-foreground: oklch(0.5 0 0);
+    --accent: oklch(0.97 0.005 240);
+    --accent-foreground: oklch(0.15 0 0);
+    --destructive: oklch(0.55 0.25 25);
+    --border: oklch(0.92 0 0);
+    --input: oklch(0.92 0 0);
+    --ring: oklch(0.3 0 0);
+    --radius: 0.75rem;
+}
+
+.dark {
+    --background: oklch(0.15 0 0);
+    --foreground: oklch(0.99 0 0);
+    --card: oklch(0.18 0 0);
+    --card-foreground: oklch(0.99 0 0);
+    --popover: oklch(0.18 0 0);
+    --popover-foreground: oklch(0.99 0 0);
+    --primary: oklch(0.99 0 0);
+    --primary-foreground: oklch(0.15 0 0);
+    --secondary: oklch(0.25 0 0);
+    --secondary-foreground: oklch(0.99 0 0);
+    --muted: oklch(0.25 0 0);
+    --muted-foreground: oklch(0.6 0 0);
+    --accent: oklch(0.25 0 0);
+    --accent-foreground: oklch(0.99 0 0);
+    --border: oklch(0.3 0 0);
+    --input: oklch(0.3 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Glossy / Clean Utilities */
+.glass {
+  @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+}
+
+.dark .glass {
+  @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-none;
+}
+
+.glossy-card {
+  @apply bg-white border border-white shadow-[0_1px_2px_rgba(0,0,0,0.05),0_4px_12px_rgba(0,0,0,0.02)] transition-all duration-300;
+}
+
+.glossy-card:hover {
+  @apply shadow-[0_8px_30px_rgb(0,0,0,0.08)] -translate-y-0.5 border-neutral-100;
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-600;
+}
+
+.dark .gradient-text {
+  @apply bg-gradient-to-br from-white via-zinc-200 to-zinc-400;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.9 0 0);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.8 0 0);
+}
+

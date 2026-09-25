@@ -9,7 +9,7 @@ const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
   title: 'Suiter Marketplace',
-  description: 'Premium Marketplace for Ads, Services, and E-commerce',
+  description: 'Enterprise marketplace and Apple advertising media management platform featuring total budget controls, instant payout disbursements, and automated invoicing.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

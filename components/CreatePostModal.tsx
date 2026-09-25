@@ -8,12 +8,25 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { ScrollArea } from './ui/scroll-area';
-import { Sparkles, Mic, Video, Image as ImageIcon, Loader2, Share2 } from 'lucide-react';
+import { Sparkles, Mic, Video, Image as ImageIcon, Loader2, Share2, MapPin, Upload, Camera } from 'lucide-react';
 import { getGeminiClient } from '@/lib/gemini';
 import { useAuth } from './AuthProvider';
 import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '@/lib/firebase';
+
+export const ADELAIDE_LOCATIONS = [
+  { name: 'Adelaide CBD / City Centre', lat: -34.9285, lng: 138.6007 },
+  { name: 'North Adelaide (O’Connell St)', lat: -34.9080, lng: 138.5950 },
+  { name: 'Norwood & The Parade', lat: -34.9215, lng: 138.6340 },
+  { name: 'Unley & King William Rd', lat: -34.9450, lng: 138.6080 },
+  { name: 'Glenelg & Jetty Rd Coast', lat: -34.9810, lng: 138.5150 },
+  { name: 'Prospect & Churchill Rd', lat: -34.8870, lng: 138.5980 },
+  { name: 'Port Adelaide & Historic Wharfs', lat: -34.8460, lng: 138.5040 },
+  { name: 'Burnside & Eastern Foothills', lat: -34.9390, lng: 138.6650 },
+  { name: 'Marion & Southern Suburbs', lat: -35.0020, lng: 138.5530 },
+  { name: 'Bowden & Brompton Arts Hub', lat: -34.9050, lng: 138.5770 }
+];
 
 const SYNDICATION_PORTALS = [
   { id: 'gumtree', name: 'Gumtree Classifieds', desc: 'Australia wide reach' },
@@ -36,6 +49,8 @@ export function CreatePostModal({ children }: { children: React.ReactNode }) {
   const [externalUrl, setExternalUrl] = useState('');
   const [isNew, setIsNew] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [locationIdx, setLocationIdx] = useState(0);
+  const [customImage, setCustomImage] = useState<string | null>(null);
   
   // Syndication States
   const [syndicateAll, setSyndicateAll] = useState(true);
@@ -174,6 +189,9 @@ export function CreatePostModal({ children }: { children: React.ReactNode }) {
       
       // Save to firebase
       try {
+        const chosenLoc = ADELAIDE_LOCATIONS[locationIdx] || ADELAIDE_LOCATIONS[0];
+        const finalImage = customImage || generatedImage || `https://picsum.photos/seed/${listingId}/800/450`;
+
         await setDoc(doc(db, 'listings', listingId), {
           id: listingId,
           title,
@@ -183,7 +201,11 @@ export function CreatePostModal({ children }: { children: React.ReactNode }) {
           stock: stock ? parseInt(stock, 10) : 0,
           externalUrl: externalUrl || '',
           isNew: isNew || false,
-          image: generatedImage || `https://picsum.photos/seed/${listingId}/800/450`,
+          image: finalImage,
+          lat: chosenLoc.lat,
+          lng: chosenLoc.lng,
+          locationName: chosenLoc.name,
+          phone: user.phone || '08 8212 3456',
           ownerId: user.id,
           ownerName: user.name,
           ownerHandle: user.handle || '@user',
@@ -202,6 +224,7 @@ export function CreatePostModal({ children }: { children: React.ReactNode }) {
         setStock('');
         setExternalUrl('');
         setGeneratedImage(null);
+        setCustomImage(null);
         setIsSyndicating(false);
         setIsOpen(false);
       } catch (error) {
@@ -407,6 +430,75 @@ export function CreatePostModal({ children }: { children: React.ReactNode }) {
                           required
                           className="rounded-2xl min-h-[140px] bg-white border-zinc-100 shadow-sm focus:border-zinc-300 p-4 animate-in fade-in"
                         />
+                      </div>
+
+                      <div className="grid gap-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="locationSelect" className="text-xs font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-rose-500" /> Geographic Area / Suburb (Map Pinned)
+                          </Label>
+                          <span className="text-[10px] font-mono text-zinc-400">
+                            {ADELAIDE_LOCATIONS[locationIdx].lat.toFixed(4)}, {ADELAIDE_LOCATIONS[locationIdx].lng.toFixed(4)}
+                          </span>
+                        </div>
+                        <select
+                          id="locationSelect"
+                          value={locationIdx}
+                          onChange={(e) => setLocationIdx(Number(e.target.value))}
+                          className="w-full rounded-2xl h-12 bg-white border border-zinc-200 px-4 text-xs font-semibold text-zinc-800 shadow-sm focus:border-zinc-400 cursor-pointer"
+                        >
+                          {ADELAIDE_LOCATIONS.map((loc, idx) => (
+                            <option key={idx} value={idx}>
+                              📍 {loc.name}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="text-[10px] text-zinc-400 pl-1">Plots this service or ad directly onto the interactive marketplace map for local discovery.</p>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <Label className="text-xs font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-1.5">
+                          <ImageIcon className="w-3.5 h-3.5 text-indigo-500" /> Image / Cover Photo
+                        </Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <Input
+                            placeholder="Paste Image URL (https://...)"
+                            value={customImage || ''}
+                            onChange={(e) => setCustomImage(e.target.value)}
+                            className="rounded-2xl h-11 bg-white border-zinc-200 text-xs"
+                          />
+                          <label className="flex items-center justify-center gap-2 h-11 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 hover:bg-zinc-100 transition-colors text-xs font-semibold text-zinc-600 cursor-pointer">
+                            <Upload className="w-3.5 h-3.5 text-zinc-500" />
+                            <span>Upload Image</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (ev) => {
+                                    setCustomImage(ev.target?.result as string);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
+                        {customImage && (
+                          <div className="relative aspect-video rounded-2xl overflow-hidden border border-zinc-200 shadow-sm mt-1">
+                            <img src={customImage} alt="Uploaded preview" className="object-cover w-full h-full" />
+                            <button
+                              type="button"
+                              onClick={() => setCustomImage(null)}
+                              className="absolute top-2 right-2 bg-black/70 hover:bg-black text-white text-[10px] font-bold px-2 py-1 rounded-lg cursor-pointer"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       {type === 'product' && (

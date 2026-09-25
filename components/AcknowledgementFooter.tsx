@@ -5,10 +5,11 @@ import { Logo } from './Logo';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { FileText, Sparkles, ShieldCheck } from 'lucide-react';
+import { FileText, Sparkles, ShieldCheck, Scale } from 'lucide-react';
+import { GovernanceModal } from './GovernanceModal';
 
 export function AcknowledgementFooter() {
-  const [activeTab, setActiveTab] = useState<'mit' | 'lottie'>('mit');
+  const [activeTab, setActiveTab] = useState<'mit' | 'apache' | 'cc' | 'lottie'>('mit');
 
   return (
     <footer className="w-full bg-zinc-50/50 relative border-t border-zinc-100">
@@ -88,28 +89,46 @@ export function AcknowledgementFooter() {
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground font-medium">
-                        This project is licensed under the standard MIT License for code and Lottie Simple License for animation assets.
+                        This project supports verified open licensing standards: MIT License, Apache License 2.0, Creative Commons (CC-BY 4.0 / CC0), and Lottie Simple License.
                       </p>
                     </DialogHeader>
 
-                    <div className="flex gap-2 my-4 p-1 bg-zinc-100 rounded-xl">
+                    <div className="flex gap-1.5 my-4 p-1 bg-zinc-100 rounded-xl overflow-x-auto">
                       <Button
                         type="button"
                         size="sm"
                         variant={activeTab === 'mit' ? 'default' : 'ghost'}
                         onClick={() => setActiveTab('mit')}
-                        className={`flex-1 rounded-lg text-xs font-bold ${activeTab === 'mit' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600'}`}
+                        className={`flex-1 rounded-lg text-xs font-bold shrink-0 ${activeTab === 'mit' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600'}`}
                       >
-                        <FileText className="w-3.5 h-3.5 mr-1.5" /> MIT License
+                        <FileText className="w-3.5 h-3.5 mr-1.5" /> MIT
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={activeTab === 'apache' ? 'default' : 'ghost'}
+                        onClick={() => setActiveTab('apache')}
+                        className={`flex-1 rounded-lg text-xs font-bold shrink-0 ${activeTab === 'apache' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600'}`}
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 mr-1.5" /> Apache 2.0
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={activeTab === 'cc' ? 'default' : 'ghost'}
+                        onClick={() => setActiveTab('cc')}
+                        className={`flex-1 rounded-lg text-xs font-bold shrink-0 ${activeTab === 'cc' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600'}`}
+                      >
+                        <Scale className="w-3.5 h-3.5 mr-1.5" /> Creative Commons
                       </Button>
                       <Button
                         type="button"
                         size="sm"
                         variant={activeTab === 'lottie' ? 'default' : 'ghost'}
                         onClick={() => setActiveTab('lottie')}
-                        className={`flex-1 rounded-lg text-xs font-bold ${activeTab === 'lottie' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600'}`}
+                        className={`flex-1 rounded-lg text-xs font-bold shrink-0 ${activeTab === 'lottie' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600'}`}
                       >
-                        <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Lottie Simple License
+                        <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Lottie
                       </Button>
                     </div>
 
@@ -136,6 +155,49 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.`}
+                      </div>
+                    ) : activeTab === 'apache' ? (
+                      <div className="bg-zinc-900 text-zinc-200 font-mono text-[11px] p-5 rounded-2xl leading-relaxed whitespace-pre-wrap border border-zinc-800 select-all">
+{`Apache License
+Version 2.0, January 2004
+http://www.apache.org/licenses/
+
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+1. Definitions.
+"License" shall mean the terms and conditions for use, reproduction, and distribution as defined by Sections 1 through 9 of this document.
+"Licensor" shall mean the copyright owner or entity authorized by the copyright owner that is granting the License.
+
+2. Grant of Copyright License.
+Subject to the terms and conditions of this License, each Contributor hereby grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce, prepare Derivative Works of, publicly display, publicly perform, sublicense, and distribute the Work and such Derivative Works in Source or Object form.
+
+3. Grant of Patent License.
+Subject to the terms and conditions of this License, each Contributor hereby grants to You a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable patent license to make, have made, use, offer to sell, sell, import, and otherwise transfer the Work.
+
+4. Redistribution.
+You may reproduce and distribute copies of the Work or Derivative Works thereof in any medium, with or without modifications, and in Source or Object form, provided that You meet the following conditions:
+(a) You must give any other recipients of the Work or Derivative Works a copy of this License; and
+(b) You must cause any modified files to carry prominent notices stating that You changed the files; and
+(c) You must retain, in the Source form of any Derivative Works that You distribute, all copyright, patent, trademark, and attribution notices from the Source form of the Work.
+
+DISCLAIMER OF WARRANTY: Unless required by applicable law or agreed to in writing, Licensor provides the Work "AS IS", WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND.`}
+                      </div>
+                    ) : activeTab === 'cc' ? (
+                      <div className="bg-zinc-900 text-zinc-200 font-mono text-[11px] p-5 rounded-2xl leading-relaxed whitespace-pre-wrap border border-zinc-800 select-all">
+{`Creative Commons Attribution 4.0 International (CC BY 4.0) & CC0 1.0 Universal
+
+Suiter Marketplace Public Creative Assets & Content
+
+You are free to:
+1. Share — copy and redistribute the material in any medium or format for any purpose, even commercially.
+2. Adapt — remix, transform, and build upon the material for any purpose, even commercially.
+
+Under the following terms:
+- Attribution: You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+- No additional restrictions: You may not apply legal terms or technological measures that legally restrict others from doing anything the license permits.
+
+Public Domain Dedication (CC0 1.0 Universal):
+Where designated, select marketplace icons, templates, and raw schema specifications are dedicated to the public domain under CC0 1.0 Universal, waiving all copyright and related rights worldwide.`}
                       </div>
                     ) : (
                       <div className="bg-zinc-900 text-zinc-200 font-mono text-[11px] p-5 rounded-2xl leading-relaxed whitespace-pre-wrap border border-zinc-800 select-all">
@@ -170,6 +232,15 @@ are furnished to do so, subject to the following terms:
                     )}
                   </DialogContent>
                 </Dialog>
+
+                <GovernanceModal
+                  trigger={
+                    <button className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-700 hover:text-emerald-900 transition-colors bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-full border border-emerald-200 cursor-pointer">
+                      <Scale className="w-3 h-3 text-emerald-600" />
+                      Governance & Compliance
+                    </button>
+                  }
+                />
               </div>
 
               <div className="flex gap-6 opacity-30">

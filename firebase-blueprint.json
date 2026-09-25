@@ -9,7 +9,10 @@
         "name": { "type": "string" },
         "email": { "type": "string" },
         "avatarUrl": { "type": "string" },
-        "handle": { "type": "string" }
+        "handle": { "type": "string" },
+        "bio": { "type": "string" },
+        "phone": { "type": "string" },
+        "location": { "type": "string" }
       },
       "required": ["id", "name", "email"]
     },
@@ -36,6 +39,59 @@
         "createdAt": { "type": "string" }
       },
       "required": ["id", "title", "description", "type", "ownerId"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Represents a completed or in-progress transaction for an engaged service, ad, or product",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "listingId": { "type": "string" },
+        "listingTitle": { "type": "string" },
+        "buyerId": { "type": "string" },
+        "buyerName": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "status": { "type": "string", "enum": ["completed", "in_progress", "cancelled"] },
+        "amount": { "type": "string" },
+        "date": { "type": "string" },
+        "rating": { "type": "number" },
+        "reviewComment": { "type": "string" },
+        "reviewedAt": { "type": "string" }
+      },
+      "required": ["id", "listingId", "buyerId", "status"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Represents a rating and written review submitted for a service, ad, or transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "transactionId": { "type": "string" },
+        "listingId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "rating": { "type": "number", "minimum": 1, "maximum": 5 },
+        "comment": { "type": "string" },
+        "date": { "type": "string" }
+      },
+      "required": ["id", "listingId", "userId", "rating", "comment"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Represents a real-time message between users in the marketplace",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderAvatar": { "type": "string" },
+        "recipientId": { "type": "string" },
+        "listingId": { "type": "string" },
+        "listingTitle": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["senderId", "recipientId", "text"]
     }
   },
   "firestore": {
@@ -46,6 +102,18 @@
     "/listings/{listingId}": {
       "schema": "Listing",
       "description": "Marketplace directory listings and shops"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Completed and active transactions"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Transaction ratings and reviews"
+    },
+    "/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Direct chat communications and thread messages"
     }
   }
 }

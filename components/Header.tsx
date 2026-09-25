@@ -7,7 +7,7 @@ import { Input } from './ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Label } from './ui/label';
-import { Search, MapPin, Plus, Sparkles, Mic, Video, Shield, Lock, Unlock, Crown, Briefcase, TrendingUp, KeyRound, MessageSquare } from 'lucide-react';
+import { Search, MapPin, Plus, Sparkles, Mic, Video, Shield, Lock, Unlock, Crown, Briefcase, TrendingUp, KeyRound, MessageSquare, Scale, User as UserIcon, Settings, ShieldCheck, Download, CheckCircle2, FileText } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Logo } from './Logo';
 
@@ -15,11 +15,35 @@ import { CreatePostModal } from './CreatePostModal';
 import { SecurityGateModal } from './SecurityGateModal';
 import { MessagesModal } from './MessagesModal';
 import { ChatModal } from './ChatModal';
+import { GovernanceSection } from './GovernanceSection';
+import { GovernanceModal } from './GovernanceModal';
+import { DirectoryModal } from './DirectoryModal';
+import { InstantBookingModal } from './InstantBookingModal';
+import { BusinessCollateralModal } from './BusinessCollateralModal';
+import { AuthLandingModal } from './AuthLandingModal';
+import { StaffManagementModal } from './StaffManagementModal';
+import { AdvertisingDirectMailModal } from './AdvertisingDirectMailModal';
+import { BusinessProfileModal } from './BusinessProfileModal';
+import { SubscriptionAndDeploymentModal } from './SubscriptionAndDeploymentModal';
+import { UserProfileModal } from './UserProfileModal';
+import { GoogleAdsModal } from './GoogleAdsModal';
+import { AppleMapsAdModal } from './AppleMapsAdModal';
+import { AppleAdvertisingBudgetModal } from './AppleAdvertisingBudgetModal';
+import { PaymentConnectorsModal } from './PaymentConnectorsModal';
+import { VoiceSearchButton } from './VoiceSearchButton';
+import { BookOpen, Calendar, Printer, Mail, Users, CreditCard, Rocket, X } from 'lucide-react';
 
-export function Header() {
+interface HeaderProps {
+  searchQuery?: string;
+  onSearchChange?: (val: string) => void;
+}
+
+export function Header({ searchQuery = '', onSearchChange }: HeaderProps = {}) {
   const { user, login, loginWithGoogle, logout, updateProfile, isAuthReady } = useAuth();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profileActiveTab, setProfileActiveTab] = useState<'profile' | 'governance' | 'settings'>('profile');
+  const [isGovernanceOpen, setIsGovernanceOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [activeChatRecipient, setActiveChatRecipient] = useState<{ name: string; handle: string; listingTitle?: string } | null>(null);
   const [email, setEmail] = useState('');
@@ -29,6 +53,56 @@ export function Header() {
   const [editBio, setEditBio] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editAvatarUrl, setEditAvatarUrl] = useState('');
+
+  // Privacy & Settings toggles
+  const [sovereignHosting, setSovereignHosting] = useState(true);
+  const [strictZeroTracking, setStrictZeroTracking] = useState(true);
+  const [complianceAlerts, setComplianceAlerts] = useState(true);
+  const [isExportingData, setIsExportingData] = useState(false);
+
+  const handleExportUserData = () => {
+    setIsExportingData(true);
+    try {
+      const exportPayload = {
+        exportDate: new Date().toISOString(),
+        jurisdictionStandard: 'Privacy Act 1988 (Cth) APP 12 & GDPR Article 20',
+        user: {
+          id: user?.id,
+          name: user?.name,
+          email: user?.email,
+          handle: user?.handle,
+          bio: user?.bio,
+          phone: user?.phone,
+          role: user?.role,
+          isCertified: user?.isCertified,
+          isRegulatoryCompliant: user?.isRegulatoryCompliant,
+          isVerifiedExperience: user?.isVerifiedExperience,
+          encryptedAuthToken: user?.encryptedAuthToken,
+        },
+        settings: {
+          sovereignHosting,
+          strictZeroTracking,
+          complianceAlerts,
+        }
+      };
+
+      const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Suiter_Profile_Data_Export_${user?.name?.replace(/\s+/g, '_') || 'User'}.json`;
+      document.body.appendChild(a);
+      a.click();
+      if (a.parentNode) {
+        a.parentNode.removeChild(a);
+      }
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Failed to export data:', e);
+    } finally {
+      setTimeout(() => setIsExportingData(false), 800);
+    }
+  };
 
   const handleSaveProfile = async () => {
     await updateProfile({
@@ -73,20 +147,144 @@ export function Header() {
             <Search className="absolute left-4 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
+              value={searchQuery}
+              onChange={(e) => onSearchChange?.(e.target.value)}
               placeholder="Search shops, products, and services..."
-              className="w-full h-11 rounded-2xl bg-zinc-100/50 border-0 pl-11 pr-32 focus-visible:bg-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-300 transition-all"
+              className="w-full h-11 rounded-2xl bg-zinc-100/50 border-0 pl-11 pr-28 focus-visible:bg-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-300 transition-all text-xs font-semibold"
             />
-            <div className="absolute right-2 flex gap-1">
-              <Badge variant="outline" className="bg-white/50 backdrop-blur-sm text-[10px] h-7 border-zinc-200 font-mono">⌘ K</Badge>
-              <Badge variant="outline" className="bg-indigo-50 text-indigo-600 text-[10px] h-7 border-indigo-100 font-bold hidden lg:flex">
-                <Sparkles className="w-2.5 h-2.5 mr-1" />
-                AI Search
-              </Badge>
+            <div className="absolute right-2 flex items-center gap-1.5">
+              {searchQuery && onSearchChange && (
+                <button
+                  type="button"
+                  onClick={() => onSearchChange('')}
+                  className="w-6 h-6 rounded-full hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600 flex items-center justify-center transition-colors cursor-pointer"
+                  title="Clear search"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {onSearchChange && (
+                <VoiceSearchButton
+                  onSearchChange={onSearchChange}
+                  currentValue={searchQuery}
+                  size="sm"
+                  variant="header"
+                />
+              )}
+              <Badge variant="outline" className="bg-white/50 backdrop-blur-sm text-[10px] h-7 border-zinc-200 font-mono hidden xl:flex">⌘ K</Badge>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* Quick Access Tools */}
+          <DirectoryModal
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden lg:flex rounded-2xl h-10 border-zinc-200 hover:bg-zinc-50 transition-colors items-center gap-1.5 cursor-pointer text-xs font-semibold"
+                title="Yellow & White Pages Directory"
+              >
+                <BookOpen className="w-4 h-4 text-amber-500" />
+                <span>Directory</span>
+              </Button>
+            }
+          />
+
+          <InstantBookingModal
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden xl:flex rounded-2xl h-10 border-zinc-200 hover:bg-zinc-50 transition-colors items-center gap-1.5 cursor-pointer text-xs font-semibold"
+                title="Instant Bookings for Kitchens, Cars, Sites & Apps"
+              >
+                <Calendar className="w-4 h-4 text-emerald-600" />
+                <span>Bookings</span>
+              </Button>
+            }
+          />
+
+          <BusinessCollateralModal
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden xl:flex rounded-2xl h-10 border-zinc-200 hover:bg-zinc-50 transition-colors items-center gap-1.5 cursor-pointer text-xs font-semibold"
+                title="Business Collateral: Letterheads, Invoices, Business Cards"
+              >
+                <Printer className="w-4 h-4 text-indigo-600" />
+                <span>Invoices & Cards</span>
+              </Button>
+            }
+          />
+
+          <SubscriptionAndDeploymentModal
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex rounded-2xl h-10 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/60 text-indigo-950 transition-all items-center gap-1.5 cursor-pointer text-xs font-bold shadow-sm"
+                title="Subscription Fees, BootP Enclave, Maritime Logistics & Deployment"
+              >
+                <Rocket className="w-4 h-4 text-indigo-600" />
+                <span>Deploy & Enclave</span>
+              </Button>
+            }
+          />
+
+          <PaymentConnectorsModal
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:flex rounded-2xl h-10 border-emerald-300 bg-emerald-50/60 hover:bg-emerald-100/70 text-emerald-950 transition-all items-center gap-1.5 cursor-pointer text-xs font-bold shadow-sm"
+                title="Payout Connectors: Bank Account, Visa Direct, Mastercard Send, Apple Wallet, Google Wallet"
+              >
+                <CreditCard className="w-4 h-4 text-emerald-600" />
+                <span>Wallets & Payouts</span>
+                <span className="bg-emerald-600 text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-black tracking-wider">
+                  BSB / Cards
+                </span>
+              </Button>
+            }
+          />
+
+          <GoogleAdsModal />
+
+          <AppleAdvertisingBudgetModal
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex rounded-2xl h-10 border-indigo-500/50 bg-zinc-950 text-white hover:bg-zinc-900 transition-all items-center gap-1.5 cursor-pointer text-xs font-bold shadow-md shadow-indigo-950/20"
+                title="Apple Advertising, Total Media Budget, Invoicing & Instant Payout"
+              >
+                <span className="text-white font-bold text-sm leading-none"></span>
+                <span className="hidden sm:inline">Apple Ads & Budget</span>
+                <span className="sm:hidden"> Ads</span>
+                <span className="bg-emerald-500 text-zinc-950 font-mono text-[9px] px-1.5 py-0.5 rounded font-black tracking-wider ml-0.5">
+                  Instant Payout
+                </span>
+              </Button>
+            }
+          />
+
+          <AppleMapsAdModal
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden lg:flex rounded-2xl h-10 border-indigo-200 bg-zinc-950 text-white hover:bg-zinc-900 transition-all items-center gap-1.5 cursor-pointer text-xs font-bold shadow-sm"
+                title="Direct Apple Maps Advertising & Location Pinning"
+              >
+                <span className="text-indigo-400 font-bold text-sm leading-none"></span>
+                <span>Apple Maps</span>
+              </Button>
+            }
+          />
+
           {!isAuthReady ? (
             <div className="h-10 w-20 animate-pulse bg-muted rounded-2xl" />
           ) : user ? (
@@ -100,6 +298,19 @@ export function Header() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setIsGovernanceOpen(true)}
+                className="rounded-2xl h-10 border-zinc-200 hover:bg-zinc-50 transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Searchable library of privacy laws, code of practice, and regulations"
+              >
+                <Scale className="w-4 h-4 text-emerald-600" />
+                <span className="hidden md:inline font-semibold text-xs">Governance</span>
+                <Badge variant="outline" className="text-[9px] px-1 py-0 border-emerald-300 text-emerald-700 bg-emerald-50 hidden xl:inline-flex">
+                  Verified
+                </Badge>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setIsMessagesOpen(true)}
                 className="relative rounded-2xl h-10 border-zinc-200 hover:bg-zinc-50 transition-colors flex items-center gap-1.5"
               >
@@ -107,17 +318,10 @@ export function Header() {
                 <span className="hidden md:inline">Messages</span>
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
               </Button>
-              <Dialog open={isProfileOpen} onOpenChange={(open) => {
-                setIsProfileOpen(open);
-                if (open && user) {
-                  setEditName(user.name);
-                  setEditHandle(user.handle || '');
-                  setEditBio(user.bio || '');
-                  setEditPhone(user.phone || '');
-                  setEditAvatarUrl(user.avatarUrl || '');
-                }
-              }}>
-                <DialogTrigger render={
+              <UserProfileModal
+                isOpen={isProfileOpen}
+                onOpenChange={setIsProfileOpen}
+                trigger={
                   <div className="flex items-center gap-3 pl-2 border-l border-zinc-100 cursor-pointer hover:opacity-85 transition-opacity">
                     <div className="flex flex-col items-end hidden lg:flex">
                       <span className="text-sm font-bold leading-none tracking-tight">{user.name}</span>
@@ -128,165 +332,17 @@ export function Header() {
                       <AvatarFallback className="bg-zinc-900 text-white font-bold">{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                   </div>
-                } />
-                <DialogContent className="sm:max-w-[480px] rounded-[2.5rem] border-0 glass p-8 max-h-[85vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="text-3xl font-display font-bold tracking-tight text-center mb-1">User Profile</DialogTitle>
-                    <p className="text-center text-muted-foreground text-xs mb-4 font-medium font-sans">Manage your identity, bio, contact details, and platform credentials.</p>
-                  </DialogHeader>
-
-                  <div className="space-y-4">
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="edit-name" className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 pl-1">Display Name / Brand</Label>
-                      <Input
-                        id="edit-name"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        className="rounded-2xl h-11 bg-white border-zinc-100 focus:border-zinc-300 transition-colors shadow-sm text-xs font-semibold"
-                      />
-                    </div>
-
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="edit-handle" className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 pl-1">Handle</Label>
-                      <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 font-bold font-mono text-xs">@</span>
-                        <Input
-                          id="edit-handle"
-                          value={editHandle.replace(/^@/, '')}
-                          onChange={(e) => setEditHandle(e.target.value)}
-                          className="rounded-2xl h-11 bg-white border-zinc-100 focus:border-zinc-300 transition-colors pl-8 shadow-sm font-semibold text-xs text-zinc-700"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="edit-bio" className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 pl-1">Brief Bio</Label>
-                      <Input
-                        id="edit-bio"
-                        value={editBio}
-                        onChange={(e) => setEditBio(e.target.value)}
-                        placeholder="Licensed service provider & trade expert..."
-                        className="rounded-2xl h-11 bg-white border-zinc-100 focus:border-zinc-300 transition-colors shadow-sm text-xs"
-                      />
-                    </div>
-
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="edit-phone" className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 pl-1">Contact Phone</Label>
-                      <Input
-                        id="edit-phone"
-                        value={editPhone}
-                        onChange={(e) => setEditPhone(e.target.value)}
-                        placeholder="0400 000 000"
-                        className="rounded-2xl h-11 bg-white border-zinc-100 focus:border-zinc-300 transition-colors shadow-sm text-xs font-mono"
-                      />
-                    </div>
-
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="edit-avatar" className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 pl-1">Profile Picture URL</Label>
-                      <Input
-                        id="edit-avatar"
-                        value={editAvatarUrl}
-                        onChange={(e) => setEditAvatarUrl(e.target.value)}
-                        placeholder="https://..."
-                        className="rounded-2xl h-11 bg-white border-zinc-100 focus:border-zinc-300 transition-colors shadow-sm text-xs font-mono"
-                      />
-                    </div>
-
-                    <div className="p-4 bg-zinc-50 rounded-2xl border border-zinc-100 space-y-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 block">Verified Status</span>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200 text-[9px] font-black uppercase">Certified</Badge>
-                        <Badge className="bg-indigo-500/10 text-indigo-700 border-indigo-200 text-[9px] font-black uppercase">Regulatory Compliant</Badge>
-                        <Badge className="bg-amber-500/10 text-amber-700 border-amber-200 text-[9px] font-black uppercase">Verified Experience</Badge>
-                      </div>
-                    </div>
-
-                    <div className="pt-2">
-                      <Button 
-                        onClick={handleSaveProfile}
-                        className="w-full rounded-2xl h-12 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-sm shadow-xl shadow-zinc-200 transition-all cursor-pointer"
-                      >
-                        Save Profile Details
-                      </Button>
-                    </div>
-
-                    <div className="border-t border-zinc-100 pt-2">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => {
-                          logout();
-                          setIsProfileOpen(false);
-                        }}
-                        className="w-full rounded-2xl h-11 text-rose-500 hover:bg-rose-50 hover:text-rose-600 font-bold text-xs transition-all cursor-pointer"
-                      >
-                        Sign Out
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                }
+              />
             </>
           ) : (
-            <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
-              <DialogTrigger render={<Button className="rounded-2xl h-10 px-6 font-bold bg-zinc-900 shadow-xl shadow-zinc-200 hover:bg-zinc-800 hover:-translate-y-0.5 transition-all">Sign In</Button>} />
-              <DialogContent className="sm:max-w-[425px] rounded-[2.5rem] border-0 glass p-8">
-                <DialogHeader>
-                  <DialogTitle className="text-3xl font-display font-bold tracking-tight text-center mb-2">Welcome Back</DialogTitle>
-                  <p className="text-center text-muted-foreground text-sm mb-6 font-medium">Connect and list your shop, stock, and services on Tarntanya (Adelaide).</p>
-                </DialogHeader>
-
-                <div className="space-y-4">
-                  <Button 
-                    type="button" 
-                    onClick={handleGoogleLogin}
-                    className="w-full rounded-2xl h-14 bg-white hover:bg-zinc-50 border border-zinc-100 text-zinc-900 font-bold text-base shadow-sm flex items-center justify-center gap-3 transition-all cursor-pointer"
-                  >
-                    <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    Sign In with Google
-                  </Button>
-
-                  <div className="flex items-center my-4">
-                    <div className="flex-1 h-px bg-zinc-100" />
-                    <span className="px-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest">or sandbox access</span>
-                    <div className="flex-1 h-px bg-zinc-100" />
-                  </div>
-                </div>
-
-                <form onSubmit={handleLogin} className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name" className="text-xs font-bold uppercase tracking-widest text-zinc-400 pl-1">Name</Label>
-                    <Input
-                      id="name"
-                      placeholder="e.g. John Doe"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                      className="rounded-2xl h-12 bg-white border-zinc-100 focus:border-zinc-300 transition-colors shadow-sm"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-zinc-400 pl-1">Email address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="name@company.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="rounded-2xl h-12 bg-white border-zinc-100 focus:border-zinc-300 transition-colors shadow-sm"
-                    />
-                  </div>
-                  <Button type="submit" className="w-full rounded-2xl h-14 bg-zinc-900 font-bold text-lg shadow-xl shadow-zinc-200 hover:bg-zinc-800 transition-all mt-4">
-                    Get Started
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <AuthLandingModal
+              trigger={
+                <Button className="rounded-2xl h-10 px-6 font-bold bg-zinc-900 shadow-xl shadow-zinc-200 hover:bg-zinc-800 hover:-translate-y-0.5 transition-all cursor-pointer">
+                  Sign In & Log In
+                </Button>
+              }
+            />
           )}
         </div>
       </div>
@@ -302,6 +358,10 @@ export function Header() {
         onClose={() => setActiveChatRecipient(null)}
         recipientName={activeChatRecipient?.name}
         recipientHandle={activeChatRecipient?.handle}
+      />
+      <GovernanceModal
+        isOpen={isGovernanceOpen}
+        onOpenChange={setIsGovernanceOpen}
       />
     </header>
   );

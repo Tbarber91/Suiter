@@ -1,6 +1,6 @@
 {
   "name": "Suiter Marketplace",
-  "description": "A glossy marketplace for ads and services with map integration, user profiles, and AI features.",
+  "description": "Enterprise marketplace and Apple advertising media management platform featuring total budget controls, instant payout disbursements, and automated invoicing.",
   "requestFramePermissions": [
     "geolocation",
     "microphone",

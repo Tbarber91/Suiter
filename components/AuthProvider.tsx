@@ -5,10 +5,15 @@ import {
   onAuthStateChanged, 
   signInWithPopup, 
   GoogleAuthProvider, 
-  signOut 
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile as updateFirebaseProfile
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+
+import { PortfolioItem, ServiceOffered, EngagedItem } from '@/lib/types';
 
 export interface User {
   id: string;
@@ -18,31 +23,51 @@ export interface User {
   handle?: string;
   bio?: string;
   phone?: string;
+  location?: string;
   role: 'admin' | 'management' | 'investor' | 'user';
   isGateLocked?: boolean;
   encryptedAuthToken?: string;
   isCertified?: boolean;
   isRegulatoryCompliant?: boolean;
   isVerifiedExperience?: boolean;
+  skills?: string[];
+  servicesProvided?: ServiceOffered[];
+  portfolio?: PortfolioItem[];
+  historyEngaged?: EngagedItem[];
 }
 
-interface ProfileUpdateData {
+export interface ProfileUpdateData {
   name: string;
   handle: string;
   bio?: string;
   phone?: string;
+  location?: string;
   avatarUrl?: string;
   role?: 'admin' | 'management' | 'investor' | 'user';
   isGateLocked?: boolean;
   isCertified?: boolean;
   isRegulatoryCompliant?: boolean;
   isVerifiedExperience?: boolean;
+  skills?: string[];
+  servicesProvided?: ServiceOffered[];
+  portfolio?: PortfolioItem[];
+  historyEngaged?: EngagedItem[];
 }
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, name: string) => void;
   loginWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signUpWithEmail: (
+    email: string, 
+    password: string, 
+    name: string, 
+    bio?: string, 
+    phone?: string, 
+    location?: string,
+    avatarUrl?: string
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   updateProfile: (data: ProfileUpdateData) => Promise<void>;
   switchRole: (role: 'admin' | 'management' | 'investor' | 'user') => void;
@@ -75,12 +100,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               handle: data.handle || `@${(firebaseUser.displayName || 'user').toLowerCase().replace(/\s+/g, '')}`,
               bio: data.bio || '',
               phone: data.phone || '',
+              location: data.location || 'Tarntanya / Adelaide CBD',
               role: data.role || 'admin',
               isGateLocked: data.isGateLocked ?? false,
               encryptedAuthToken: data.encryptedAuthToken || `ENC-AES256-RSA4096-OVERSEER-${firebaseUser.uid.substring(0, 8).toUpperCase()}`,
               isCertified: data.isCertified ?? true,
               isRegulatoryCompliant: data.isRegulatoryCompliant ?? true,
               isVerifiedExperience: data.isVerifiedExperience ?? true,
+              skills: data.skills || ['Licensed Joinery', 'Building Compliance AS 4386', 'Architectural Surveying', 'Master Builder'],
+              servicesProvided: data.servicesProvided || [
+                { id: 's1', title: '3D Laser Spatial Survey & Architectural Joinery', description: 'Laser measured CAD designs, 2-pack polyurethane finishes and engineered stone sign-off.', price: 'From $2,400', category: 'Kitchen Renovations', turnaround: '2-3 Weeks' },
+                { id: 's2', title: 'Master Builder Statutory Compliance Review', description: 'South Australia CBS builder license review and statutory site survey.', price: '$650 Fixed', category: 'Building Sites', turnaround: '2 Business Days' }
+              ],
+              portfolio: data.portfolio || [
+                { id: 'p1', title: 'Norwood Heritage Villa Joinery', description: 'Bespoke walnut veneer cabinetry and custom kitchen island.', image: 'https://picsum.photos/seed/norwoodjoinery/800/450', category: 'Kitchen Renovations', date: 'August 2026' },
+                { id: 'p2', title: 'Unley Architectural Spatial Scan', description: '3D point-cloud LiDAR scan and certified site plan.', image: 'https://picsum.photos/seed/unleyscan/800/450', category: 'Sites & Feasibility', date: 'September 2026' }
+              ],
+              historyEngaged: data.historyEngaged || [
+                { id: 'h1', title: 'City West Toyota Certified LMVD Inspection', type: 'product', providerName: 'City West Toyota', providerHandle: '@citywest_toyota', date: '18 Sep 2026', status: 'completed', price: '$38,900' },
+                { id: 'h2', title: 'Kaurna Cultural Heritage Advisory Session', type: 'service', providerName: 'Kaurna Cultural Centre', providerHandle: '@kaurna_centre', date: '21 Sep 2026', status: 'completed', price: 'Community' }
+              ]
             });
           } else {
             const tempHandle = `@${(firebaseUser.displayName || 'user').toLowerCase().replace(/\s+/g, '')}`;
@@ -92,12 +131,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               handle: tempHandle,
               bio: 'Licensed enterprise provider based on Kaurna Country.',
               phone: '0400 123 456',
+              location: 'Tarntanya / Adelaide CBD',
               role: 'admin',
               isGateLocked: false,
               encryptedAuthToken: `ENC-AES256-RSA4096-OVERSEER-${firebaseUser.uid.substring(0, 8).toUpperCase()}`,
               isCertified: true,
               isRegulatoryCompliant: true,
               isVerifiedExperience: true,
+              skills: ['Licensed Joinery', 'Building Compliance AS 4386', 'Architectural Surveying', 'Master Builder'],
+              servicesProvided: [
+                { id: 's1', title: '3D Laser Spatial Survey & Architectural Joinery', description: 'Laser measured CAD designs, 2-pack polyurethane finishes and engineered stone sign-off.', price: 'From $2,400', category: 'Kitchen Renovations', turnaround: '2-3 Weeks' },
+                { id: 's2', title: 'Master Builder Statutory Compliance Review', description: 'South Australia CBS builder license review and statutory site survey.', price: '$650 Fixed', category: 'Building Sites', turnaround: '2 Business Days' }
+              ],
+              portfolio: [
+                { id: 'p1', title: 'Norwood Heritage Villa Joinery', description: 'Bespoke walnut veneer cabinetry and custom kitchen island.', image: 'https://picsum.photos/seed/norwoodjoinery/800/450', category: 'Kitchen Renovations', date: 'August 2026' },
+                { id: 'p2', title: 'Unley Architectural Spatial Scan', description: '3D point-cloud LiDAR scan and certified site plan.', image: 'https://picsum.photos/seed/unleyscan/800/450', category: 'Sites & Feasibility', date: 'September 2026' }
+              ],
+              historyEngaged: [
+                { id: 'h1', title: 'City West Toyota Certified LMVD Inspection', type: 'product', providerName: 'City West Toyota', providerHandle: '@citywest_toyota', date: '18 Sep 2026', status: 'completed', price: '$38,900' },
+                { id: 'h2', title: 'Kaurna Cultural Heritage Advisory Session', type: 'service', providerName: 'Kaurna Cultural Centre', providerHandle: '@kaurna_centre', date: '21 Sep 2026', status: 'completed', price: 'Community' }
+              ]
             };
             await setDoc(userRef, newUser);
             setUser(newUser);
@@ -132,6 +185,110 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => unsubscribe();
   }, []);
+
+  const signInWithEmail = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const firebaseUser = userCredential.user;
+      
+      const userRef = doc(db, 'users', firebaseUser.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        const loadedUser: User = {
+          id: firebaseUser.uid,
+          name: data.name || firebaseUser.displayName || 'Marketplace User',
+          email: data.email || firebaseUser.email || email,
+          avatarUrl: data.avatarUrl || firebaseUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${firebaseUser.uid}`,
+          handle: data.handle || `@${(firebaseUser.displayName || 'user').toLowerCase().replace(/\s+/g, '')}`,
+          bio: data.bio || '',
+          phone: data.phone || '',
+          location: data.location || 'Tarntanya / Adelaide CBD',
+          role: data.role || 'user',
+          isGateLocked: data.isGateLocked ?? false,
+          encryptedAuthToken: data.encryptedAuthToken || `ENC-AES256-RSA4096-OVERSEER-${firebaseUser.uid.substring(0, 8).toUpperCase()}`,
+          isCertified: data.isCertified ?? true,
+          isRegulatoryCompliant: data.isRegulatoryCompliant ?? true,
+          isVerifiedExperience: data.isVerifiedExperience ?? true,
+        };
+        setUser(loadedUser);
+        localStorage.setItem('suiter_user', JSON.stringify(loadedUser));
+      }
+      return { success: true };
+    } catch (err: any) {
+      console.error("Firebase email sign-in error:", err);
+      let message = "Invalid email or password.";
+      if (err.code === 'auth/user-not-found') message = "No account found with this email.";
+      else if (err.code === 'auth/wrong-password') message = "Incorrect password. Please try again.";
+      else if (err.code === 'auth/invalid-credential') message = "Invalid login credentials. Please check your email and password.";
+      else if (err.code === 'auth/invalid-email') message = "Please enter a valid email address.";
+      else if (err.message) message = err.message;
+      return { success: false, error: message };
+    }
+  };
+
+  const signUpWithEmail = async (
+    email: string,
+    password: string,
+    name: string,
+    bio?: string,
+    phone?: string,
+    location?: string,
+    avatarUrl?: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const firebaseUser = userCredential.user;
+
+      const cleanHandle = `@${name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'user'}`;
+      const chosenAvatar = avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || email)}`;
+
+      try {
+        await updateFirebaseProfile(firebaseUser, {
+          displayName: name,
+          photoURL: chosenAvatar,
+        });
+      } catch (e) {
+        // non-critical
+      }
+
+      const newUser: User = {
+        id: firebaseUser.uid,
+        name: name.trim(),
+        email: email.trim(),
+        avatarUrl: chosenAvatar,
+        handle: cleanHandle,
+        bio: bio || 'Verified marketplace provider & community participant.',
+        phone: phone || '',
+        location: location || 'Tarntanya / Adelaide CBD',
+        role: 'user',
+        isGateLocked: false,
+        encryptedAuthToken: `ENC-AES256-RSA4096-OVERSEER-${firebaseUser.uid.substring(0, 8).toUpperCase()}`,
+        isCertified: true,
+        isRegulatoryCompliant: true,
+        isVerifiedExperience: true,
+      };
+
+      try {
+        const userRef = doc(db, 'users', firebaseUser.uid);
+        await setDoc(userRef, newUser);
+      } catch (err) {
+        console.error("Failed to write new user profile to Firestore:", err);
+      }
+
+      setUser(newUser);
+      localStorage.setItem('suiter_user', JSON.stringify(newUser));
+      return { success: true };
+    } catch (err: any) {
+      console.error("Firebase email sign-up error:", err);
+      let message = "Failed to create account.";
+      if (err.code === 'auth/email-already-in-use') message = "This email is already registered. Please sign in instead.";
+      else if (err.code === 'auth/weak-password') message = "Password should be at least 6 characters long.";
+      else if (err.code === 'auth/invalid-email') message = "Invalid email format.";
+      else if (err.message) message = err.message;
+      return { success: false, error: message };
+    }
+  };
 
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
@@ -241,12 +398,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       handle: formattedHandle,
       bio: data.bio ?? user.bio,
       phone: data.phone ?? user.phone,
+      location: data.location ?? user.location,
       avatarUrl: data.avatarUrl ?? user.avatarUrl,
       role: data.role ?? user.role,
       isGateLocked: data.isGateLocked ?? user.isGateLocked,
       isCertified: data.isCertified ?? user.isCertified,
       isRegulatoryCompliant: data.isRegulatoryCompliant ?? user.isRegulatoryCompliant,
       isVerifiedExperience: data.isVerifiedExperience ?? user.isVerifiedExperience,
+      skills: data.skills ?? user.skills,
+      servicesProvided: data.servicesProvided ?? user.servicesProvided,
+      portfolio: data.portfolio ?? user.portfolio,
+      historyEngaged: data.historyEngaged ?? user.historyEngaged,
     };
 
     if (auth.currentUser) {
@@ -264,7 +426,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, loginWithGoogle, logout, updateProfile, switchRole, toggleGateLock, unlockGateWithKey, isAuthReady }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      loginWithGoogle, 
+      signInWithEmail, 
+      signUpWithEmail, 
+      logout, 
+      updateProfile, 
+      switchRole, 
+      toggleGateLock, 
+      unlockGateWithKey, 
+      isAuthReady 
+    }}>
       {children}
     </AuthContext.Provider>
   );

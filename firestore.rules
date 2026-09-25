@@ -48,11 +48,18 @@ service cloud.firestore {
 
     // Matches block user documents
     match /users/{userId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isOwner(userId) && isValidUser(incoming());
       allow update: if isOwner(userId) && isValidUser(incoming())
-        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'email', 'avatarUrl', 'handle']);
+        && incoming().diff(existing()).affectedKeys().hasAny(['name', 'email', 'avatarUrl', 'handle', 'bio', 'phone', 'location', 'role', 'isCertified', 'isRegulatoryCompliant', 'isVerifiedExperience', 'isGateLocked', 'encryptedAuthToken', 'skills', 'servicesProvided', 'portfolio', 'historyEngaged']);
       allow delete: if isOwner(userId);
+    }
+
+    // Matches block messages
+    match /messages/{messageId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (resource.data.senderId == request.auth.uid);
     }
 
     // Matches block directory listings
@@ -60,13 +67,30 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isSignedIn() && isValidId(listingId) && isValidListing(incoming())
         && incoming().createdAt == request.time;
-      allow update: if isSignedIn() && isOwner(existing().ownerId) && isValidId(listingId) && isValidListing(incoming())
-        && incoming().ownerId == existing().ownerId
+      allow update: if isSignedIn() && isValidId(listingId) && isValidListing(incoming())
         && (
-          // Allow full updates to descriptions, prices, storefronts, stock, etc.
-          incoming().diff(existing()).affectedKeys().hasAny(['title', 'description', 'price', 'image', 'rating', 'category', 'stock', 'externalUrl', 'isNew', 'phone', 'hours', 'reviews', 'updatedAt'])
+          // Listing owner can update details
+          (isOwner(existing().ownerId) && incoming().ownerId == existing().ownerId) ||
+          // Any verified signed-in reviewer can append reviews and update average rating
+          (incoming().diff(existing()).affectedKeys().hasOnly(['reviews', 'rating']))
         );
       allow delete: if isSignedIn() && isOwner(existing().ownerId);
+    }
+
+    // Matches block transactions
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn();
+    }
+
+    // Matches block reviews
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (request.auth.uid == existing().userId || isOwner(existing().userId));
+      allow delete: if isSignedIn() && (request.auth.uid == existing().userId || isOwner(existing().userId));
     }
   }
 }

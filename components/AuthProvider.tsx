@@ -183,7 +183,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthReady(true);
     });
 
-    return () => unsubscribe();
+    // Automated Security Gatekeeper: Closes & locks gates automatically on exit, window change, or stationary timeout
+    const handleAutoShutGate = () => {
+      setUser((currentUser) => {
+        if (!currentUser || currentUser.isGateLocked) return currentUser;
+        const autoLockedUser = { ...currentUser, isGateLocked: true };
+        if (auth.currentUser) {
+          const userRef = doc(db, 'users', auth.currentUser.uid);
+          setDoc(userRef, { isGateLocked: true }, { merge: true }).catch(() => {});
+        }
+        localStorage.setItem('suiter_user', JSON.stringify(autoLockedUser));
+        return autoLockedUser;
+      });
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        handleAutoShutGate();
+      }
+    };
+
+    // Stationary / Idle timer: auto-shuts gate after stationary inactivity
+    let idleTimer: ReturnType<typeof setTimeout>;
+    const resetIdleTimer = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        handleAutoShutGate();
+      }, 180000); // 3 minutes stationary
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleAutoShutGate);
+    window.addEventListener('mousemove', resetIdleTimer, { passive: true });
+    window.addEventListener('keydown', resetIdleTimer, { passive: true });
+    window.addEventListener('touchstart', resetIdleTimer, { passive: true });
+    resetIdleTimer();
+
+    return () => {
+      unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleAutoShutGate);
+      window.removeEventListener('mousemove', resetIdleTimer);
+      window.removeEventListener('keydown', resetIdleTimer);
+      window.removeEventListener('touchstart', resetIdleTimer);
+      clearTimeout(idleTimer);
+    };
   }, []);
 
   const signInWithEmail = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {

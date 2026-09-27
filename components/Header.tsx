@@ -31,7 +31,9 @@ import { AppleMapsAdModal } from './AppleMapsAdModal';
 import { AppleAdvertisingBudgetModal } from './AppleAdvertisingBudgetModal';
 import { PaymentConnectorsModal } from './PaymentConnectorsModal';
 import { VoiceSearchButton } from './VoiceSearchButton';
-import { BookOpen, Calendar, Printer, Mail, Users, CreditCard, Rocket, X } from 'lucide-react';
+import { BuildingPlanCADStudioModal } from './BuildingPlanCADStudioModal';
+import { PetrolRewardsModal } from './PetrolRewardsModal';
+import { BookOpen, Calendar, Printer, Mail, Users, CreditCard, Rocket, X, Menu, Compass, Fuel } from 'lucide-react';
 
 interface HeaderProps {
   searchQuery?: string;
@@ -42,6 +44,7 @@ export function Header({ searchQuery = '', onSearchChange }: HeaderProps = {}) {
   const { user, login, loginWithGoogle, logout, updateProfile, isAuthReady } = useAuth();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [profileActiveTab, setProfileActiveTab] = useState<'profile' | 'governance' | 'settings'>('profile');
   const [isGovernanceOpen, setIsGovernanceOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
@@ -285,6 +288,39 @@ export function Header({ searchQuery = '', onSearchChange }: HeaderProps = {}) {
             }
           />
 
+          {/* Building Plan CAD Studio (Desktop Quick Tool) */}
+          <BuildingPlanCADStudioModal
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden lg:flex rounded-2xl h-10 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/60 text-indigo-950 transition-all items-center gap-1.5 cursor-pointer text-xs font-bold shadow-xs"
+                title="Building Plan CAD Studio (2D Room Sketcher & Multi-Model AI Advisor)"
+              >
+                <Compass className="w-4 h-4 text-indigo-600" />
+                <span>CAD Studio</span>
+              </Button>
+            }
+          />
+
+          {/* Petrol Rewards (Desktop Quick Tool) */}
+          <PetrolRewardsModal
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:flex rounded-2xl h-10 border-amber-300 bg-amber-50/60 hover:bg-amber-100/70 text-amber-950 transition-all items-center gap-1.5 cursor-pointer text-xs font-bold shadow-xs"
+                title="Shell & Mobil Petrol Rewards, Pump Discounts & Adelaide Fuel Prices"
+              >
+                <Fuel className="w-4 h-4 text-amber-600" />
+                <span>Petrol Rewards</span>
+                <span className="bg-amber-500 text-zinc-950 font-mono text-[9px] px-1.5 py-0.5 rounded font-black tracking-wider">
+                  Shell/Mobil
+                </span>
+              </Button>
+            }
+          />
+
           {!isAuthReady ? (
             <div className="h-10 w-20 animate-pulse bg-muted rounded-2xl" />
           ) : user ? (
@@ -299,11 +335,11 @@ export function Header({ searchQuery = '', onSearchChange }: HeaderProps = {}) {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsGovernanceOpen(true)}
-                className="rounded-2xl h-10 border-zinc-200 hover:bg-zinc-50 transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="rounded-2xl h-10 border-zinc-200 hover:bg-zinc-50 transition-colors hidden md:flex items-center gap-1.5 cursor-pointer"
                 title="Searchable library of privacy laws, code of practice, and regulations"
               >
                 <Scale className="w-4 h-4 text-emerald-600" />
-                <span className="hidden md:inline font-semibold text-xs">Governance</span>
+                <span className="font-semibold text-xs">Governance</span>
                 <Badge variant="outline" className="text-[9px] px-1 py-0 border-emerald-300 text-emerald-700 bg-emerald-50 hidden xl:inline-flex">
                   Verified
                 </Badge>
@@ -312,7 +348,7 @@ export function Header({ searchQuery = '', onSearchChange }: HeaderProps = {}) {
                 variant="outline"
                 size="sm"
                 onClick={() => setIsMessagesOpen(true)}
-                className="relative rounded-2xl h-10 border-zinc-200 hover:bg-zinc-50 transition-colors flex items-center gap-1.5"
+                className="relative rounded-2xl h-10 border-zinc-200 hover:bg-zinc-50 transition-colors hidden sm:flex items-center gap-1.5"
               >
                 <MessageSquare className="w-4 h-4 text-indigo-600" />
                 <span className="hidden md:inline">Messages</span>
@@ -322,7 +358,7 @@ export function Header({ searchQuery = '', onSearchChange }: HeaderProps = {}) {
                 isOpen={isProfileOpen}
                 onOpenChange={setIsProfileOpen}
                 trigger={
-                  <div className="flex items-center gap-3 pl-2 border-l border-zinc-100 cursor-pointer hover:opacity-85 transition-opacity">
+                  <div className="flex items-center gap-2 pl-2 border-l border-zinc-100 cursor-pointer hover:opacity-85 transition-opacity">
                     <div className="flex flex-col items-end hidden lg:flex">
                       <span className="text-sm font-bold leading-none tracking-tight">{user.name}</span>
                       <span className="text-[10px] text-zinc-500 font-medium">{user.handle || '@user'}</span>
@@ -338,14 +374,222 @@ export function Header({ searchQuery = '', onSearchChange }: HeaderProps = {}) {
           ) : (
             <AuthLandingModal
               trigger={
-                <Button className="rounded-2xl h-10 px-6 font-bold bg-zinc-900 shadow-xl shadow-zinc-200 hover:bg-zinc-800 hover:-translate-y-0.5 transition-all cursor-pointer">
+                <Button className="rounded-2xl h-10 px-4 md:px-6 font-bold bg-zinc-900 shadow-xl shadow-zinc-200 hover:bg-zinc-800 hover:-translate-y-0.5 transition-all cursor-pointer text-xs">
                   Sign In & Log In
                 </Button>
               }
             />
           )}
+
+          {/* Mobile Hamburger & Action Drawer Toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden rounded-2xl h-10 w-10 p-0 border-zinc-200 hover:bg-zinc-50 flex items-center justify-center cursor-pointer shadow-xs"
+            aria-label="Toggle Navigation Menu"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5 text-zinc-900" /> : <Menu className="w-5 h-5 text-zinc-900" />}
+          </Button>
         </div>
       </div>
+
+      {/* Expandable Mobile Navigation Drawer */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden border-t border-zinc-200/80 bg-white/95 backdrop-blur-2xl px-5 py-6 space-y-5 animate-in slide-in-from-top-4 duration-300 shadow-2xl max-h-[82vh] overflow-y-auto">
+          {/* User Status Bar */}
+          {user ? (
+            <div className="p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+                  <AvatarImage src={user.avatarUrl} alt={user.name} />
+                  <AvatarFallback className="bg-zinc-900 text-white font-bold">{user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-xs font-bold text-zinc-900 leading-tight">{user.name}</p>
+                  <p className="text-[10px] text-zinc-500 font-mono">{user.handle || '@user'}</p>
+                </div>
+              </div>
+              <UserProfileModal
+                isOpen={isProfileOpen}
+                onOpenChange={setIsProfileOpen}
+                trigger={
+                  <Button size="sm" variant="outline" className="h-8 rounded-xl text-xs font-bold border-zinc-300">
+                    Profile
+                  </Button>
+                }
+              />
+            </div>
+          ) : (
+            <div className="p-4 bg-zinc-950 text-white rounded-2xl space-y-2">
+              <p className="text-xs font-bold">Welcome to Suiter Marketplace</p>
+              <p className="text-[11px] text-zinc-400">Sign in to manage listings, CAD floorplans, and petrol fuel rewards.</p>
+              <AuthLandingModal
+                trigger={
+                  <Button className="w-full h-10 rounded-xl bg-white text-zinc-950 font-bold text-xs hover:bg-zinc-100 cursor-pointer shadow-md mt-1">
+                    Sign In & Register (Expand Menu)
+                  </Button>
+                }
+              />
+            </div>
+          )}
+
+          {/* Quick Tools Grid for Mobile */}
+          <div className="space-y-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+              Core Modules & Architectural Tools
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              {/* CAD Studio */}
+              <BuildingPlanCADStudioModal
+                trigger={
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-3 rounded-2xl bg-indigo-50 border border-indigo-200 text-left hover:bg-indigo-100/70 transition-all cursor-pointer flex flex-col justify-between"
+                  >
+                    <div className="w-7 h-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center mb-1.5 shadow-xs">
+                      <Compass className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-indigo-950">CAD Studio</p>
+                      <p className="text-[10px] text-indigo-700">2D Room Sketcher & AI</p>
+                    </div>
+                  </button>
+                }
+              />
+
+              {/* Petrol Rewards */}
+              <PetrolRewardsModal
+                trigger={
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-left hover:bg-amber-100/70 transition-all cursor-pointer flex flex-col justify-between"
+                  >
+                    <div className="w-7 h-7 rounded-xl bg-amber-500 text-zinc-950 flex items-center justify-center mb-1.5 shadow-xs">
+                      <Fuel className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-amber-950">Petrol Rewards</p>
+                      <p className="text-[10px] text-amber-800">Shell & Mobil Cards</p>
+                    </div>
+                  </button>
+                }
+              />
+
+              {/* Directory */}
+              <DirectoryModal
+                trigger={
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-3 rounded-2xl bg-zinc-50 border border-zinc-200 text-left hover:bg-zinc-100 transition-all cursor-pointer flex flex-col justify-between"
+                  >
+                    <div className="w-7 h-7 rounded-xl bg-zinc-800 text-white flex items-center justify-center mb-1.5">
+                      <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-zinc-900">Yellow Directory</p>
+                      <p className="text-[10px] text-zinc-500">Adelaide verified</p>
+                    </div>
+                  </button>
+                }
+              />
+
+              {/* Instant Bookings */}
+              <InstantBookingModal
+                trigger={
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-3 rounded-2xl bg-zinc-50 border border-zinc-200 text-left hover:bg-zinc-100 transition-all cursor-pointer flex flex-col justify-between"
+                  >
+                    <div className="w-7 h-7 rounded-xl bg-emerald-600 text-white flex items-center justify-center mb-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-zinc-900">Instant Bookings</p>
+                      <p className="text-[10px] text-zinc-500">Kitchens, sites, cars</p>
+                    </div>
+                  </button>
+                }
+              />
+
+              {/* Invoices & Collateral */}
+              <BusinessCollateralModal
+                trigger={
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-3 rounded-2xl bg-zinc-50 border border-zinc-200 text-left hover:bg-zinc-100 transition-all cursor-pointer flex flex-col justify-between"
+                  >
+                    <div className="w-7 h-7 rounded-xl bg-zinc-800 text-white flex items-center justify-center mb-1.5">
+                      <Printer className="w-3.5 h-3.5 text-indigo-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-zinc-900">Invoices & Cards</p>
+                      <p className="text-[10px] text-zinc-500">Professional branding</p>
+                    </div>
+                  </button>
+                }
+              />
+
+              {/* Payouts & Wallets */}
+              <PaymentConnectorsModal
+                trigger={
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-3 rounded-2xl bg-zinc-50 border border-zinc-200 text-left hover:bg-zinc-100 transition-all cursor-pointer flex flex-col justify-between"
+                  >
+                    <div className="w-7 h-7 rounded-xl bg-emerald-700 text-white flex items-center justify-center mb-1.5">
+                      <CreditCard className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-zinc-900">Wallets & BSB</p>
+                      <p className="text-[10px] text-zinc-500">Instant direct payouts</p>
+                    </div>
+                  </button>
+                }
+              />
+            </div>
+          </div>
+
+          {/* Post Listing & Governance Actions */}
+          <div className="pt-2 space-y-2">
+            <CreatePostModal>
+              <Button className="w-full h-11 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold cursor-pointer shadow-md flex items-center justify-center gap-2">
+                <Plus className="w-4 h-4" /> Post New Listing
+              </Button>
+            </CreatePostModal>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsGovernanceOpen(true);
+                }}
+                className="flex-1 rounded-2xl h-10 text-xs font-bold border-zinc-200 hover:bg-zinc-50 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Scale className="w-4 h-4 text-emerald-600" /> Governance
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsMessagesOpen(true);
+                }}
+                className="flex-1 rounded-2xl h-10 text-xs font-bold border-zinc-200 hover:bg-zinc-50 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <MessageSquare className="w-4 h-4 text-indigo-600" /> Messages
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <MessagesModal
         isOpen={isMessagesOpen}
         onClose={() => setIsMessagesOpen(false)}

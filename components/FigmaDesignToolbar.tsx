@@ -32,7 +32,9 @@ import { StaffManagementModal } from './StaffManagementModal';
 import { AuthLandingModal } from './AuthLandingModal';
 import { BusinessProfileModal } from './BusinessProfileModal';
 import { SubscriptionAndDeploymentModal } from './SubscriptionAndDeploymentModal';
-import { CreditCard, Rocket } from 'lucide-react';
+import { BuildingPlanCADStudioModal } from './BuildingPlanCADStudioModal';
+import { PetrolRewardsModal } from './PetrolRewardsModal';
+import { CreditCard, Rocket, Compass, Fuel } from 'lucide-react';
 
 interface FigmaDesignToolbarProps {
   onToggleGrid?: (enabled: boolean) => void;
@@ -168,6 +170,32 @@ export function FigmaDesignToolbar({ onToggleGrid, gridEnabled = false }: FigmaD
                 >
                   <Rocket className="w-3.5 h-3.5" />
                   <span>BootP & Deploy</span>
+                </button>
+              }
+            />
+
+            {/* Building Plan CAD Studio */}
+            <BuildingPlanCADStudioModal
+              trigger={
+                <button 
+                  onClick={() => setActiveFrame('Building Plan CAD Studio')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-500/20 hover:bg-indigo-500/30 text-[11px] font-bold text-indigo-300 transition-colors cursor-pointer whitespace-nowrap border border-indigo-500/30"
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>CAD Studio</span>
+                </button>
+              }
+            />
+
+            {/* Petrol Rewards */}
+            <PetrolRewardsModal
+              trigger={
+                <button 
+                  onClick={() => setActiveFrame('Petrol Rewards')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-[11px] font-bold text-amber-300 transition-colors cursor-pointer whitespace-nowrap border border-amber-500/30"
+                >
+                  <Fuel className="w-3.5 h-3.5" />
+                  <span>Petrol Rewards</span>
                 </button>
               }
             />

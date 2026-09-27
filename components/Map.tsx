@@ -20,10 +20,13 @@ import {
   Building2, 
   ExternalLink, 
   Sparkles,
-  Phone
+  Phone,
+  Fuel
 } from 'lucide-react';
 import { AppleMapsAdModal } from './AppleMapsAdModal';
 import { computeRatingStats } from '@/lib/transactions';
+import { ADELAIDE_SERVICE_STATIONS } from './PetrolRewardsModal';
+import { ServiceStation } from '@/lib/types';
 
 interface MapProps {
   locations: Location[];
@@ -181,6 +184,44 @@ const createCustomIcon = (type: string, title: string, isSelected: boolean, isAp
   });
 };
 
+const createFuelStationIcon = (brand: 'Shell' | 'Mobil', isSelected: boolean) => {
+  const isShell = brand === 'Shell';
+  const bgColor = isShell ? '#f59e0b' : '#2563eb';
+  const textColor = isShell ? '#09090b' : '#ffffff';
+  const label = isShell ? 'Shell • GO+' : 'Mobil Smiles';
+
+  const html = `
+    <div style="
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: ${bgColor};
+      color: ${textColor};
+      padding: 5px 10px;
+      border-radius: 9999px;
+      box-shadow: 0 8px 20px -3px rgba(0, 0, 0, 0.35);
+      border: 2px solid #ffffff;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+      cursor: pointer;
+      transform: ${isSelected ? 'scale(1.18)' : 'scale(1)'};
+    ">
+      <span>⛽</span>
+      <span>${label}</span>
+    </div>
+  `;
+
+  return L.divIcon({
+    html,
+    className: 'custom-fuel-marker',
+    iconSize: [100, 30],
+    iconAnchor: [50, 15],
+    popupAnchor: [0, -15]
+  });
+};
+
 interface HeatCluster {
   id: string;
   name: string;
@@ -217,6 +258,8 @@ export default function Map({
   const [activeLayer, setActiveLayer] = useState<keyof typeof TILE_SERVERS>('appleMaps');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [showMapInsights, setShowMapInsights] = useState(false);
+  const [showPetrolStations, setShowPetrolStations] = useState(true);
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(null);
   const [smartRouteActive, setSmartRouteActive] = useState(false);
   const [manualCenter, setManualCenter] = useState<[number, number] | null>(null);
   const [manualZoom, setManualZoom] = useState<number | null>(null);
@@ -345,6 +388,21 @@ export default function Map({
             <span className="hidden sm:inline">Apple Maps App</span>
             <ExternalLink className="w-3 h-3 text-zinc-400" />
           </a>
+
+          {/* Shell & Mobil Petrol Stations Map Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowPetrolStations(!showPetrolStations)}
+            className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl shadow-xl border text-xs font-extrabold transition-all cursor-pointer ${
+              showPetrolStations
+                ? 'bg-amber-500 text-zinc-950 border-amber-400 ring-2 ring-amber-300'
+                : 'bg-white/90 backdrop-blur-md border-zinc-200/80 text-zinc-800 hover:bg-white'
+            }`}
+            title="Toggle Shell & Mobil fuel stations and pump discounts on map"
+          >
+            <Fuel className="w-3.5 h-3.5" />
+            <span>{showPetrolStations ? 'Fuel Stations: ON' : 'Petrol'}</span>
+          </button>
 
           {/* Map Insights Heatmap Toggle */}
           <button
@@ -670,6 +728,73 @@ export default function Map({
                       </a>
                     )}
                   </div>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
+
+        {/* Participating Shell & Mobil Service Station Markers */}
+        {showPetrolStations && ADELAIDE_SERVICE_STATIONS.map((station) => {
+          const isSelected = selectedStationId === station.id;
+          return (
+            <Marker
+              key={station.id}
+              position={[station.lat, station.lng]}
+              icon={createFuelStationIcon(station.brand, isSelected)}
+              eventHandlers={{
+                click: () => setSelectedStationId(station.id)
+              }}
+            >
+              <Popup className="custom-leaflet-popup">
+                <div className="font-sans max-w-[260px] p-1.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                      station.brand === 'Shell' ? 'bg-amber-400 text-zinc-950' : 'bg-blue-600 text-white'
+                    }`}>
+                      {station.brand === 'Shell' ? 'Shell Card • GO+' : 'Mobil Smiles'}
+                    </span>
+                    <span className="text-[10px] font-mono text-zinc-400 font-bold">{station.distanceKm} km</span>
+                  </div>
+
+                  <div>
+                    <h4 className="font-bold text-xs text-zinc-900 leading-snug">{station.name}</h4>
+                    <p className="text-[10px] text-zinc-500 mt-0.5 flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
+                      {station.address}, {station.suburb}
+                    </p>
+                  </div>
+
+                  {/* Fuel prices board */}
+                  <div className="grid grid-cols-3 gap-1 p-2 bg-zinc-50 rounded-xl border border-zinc-200 text-center font-mono text-xs">
+                    <div>
+                      <span className="text-[8px] text-zinc-400 uppercase block">U91</span>
+                      <strong className="text-zinc-900">{station.unleaded91}¢</strong>
+                    </div>
+                    <div>
+                      <span className="text-[8px] text-zinc-400 uppercase block">Diesel</span>
+                      <strong className="text-zinc-900">{station.diesel}¢</strong>
+                    </div>
+                    <div>
+                      <span className="text-[8px] text-zinc-400 uppercase block">Prem</span>
+                      <strong className="text-amber-600">{station.vpowerOrSupreme}¢</strong>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[9px] font-bold text-emerald-700 bg-emerald-50 p-1.5 rounded-lg border border-emerald-200">
+                    <span>✓ Up to 8¢/L off with linked card</span>
+                    {station.open24Hours && <span className="text-zinc-500">24 Hours</span>}
+                  </div>
+
+                  <a
+                    href={`https://maps.apple.com/?ll=${station.lat},${station.lng}&q=${encodeURIComponent(station.name)}&daddr=${station.lat},${station.lng}&dirflg=d`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-1.5 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                  >
+                    <span>Directions to Pump</span>
+                    <Navigation className="w-3 h-3 text-amber-400" />
+                  </a>
                 </div>
               </Popup>
             </Marker>

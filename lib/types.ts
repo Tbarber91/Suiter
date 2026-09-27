@@ -174,3 +174,44 @@ export interface ChatMessage {
   timestamp: string;
 }
 
+export interface FuelCard {
+  id: string;
+  provider: 'shell' | 'mobil';
+  cardNumber: string;
+  cardHolderName: string;
+  pointsBalance: number;
+  discountPerLiterCents: number;
+  tier: 'Gold' | 'Platinum' | 'Commercial' | 'Smiles';
+  linkedDate: string;
+}
+
+export interface ServiceStation {
+  id: string;
+  name: string;
+  brand: 'Shell' | 'Mobil';
+  address: string;
+  suburb: string;
+  lat: number;
+  lng: number;
+  unleaded91: number;
+  diesel: number;
+  vpowerOrSupreme: number;
+  open24Hours: boolean;
+  distanceKm?: number;
+  hasCarWash: boolean;
+  hasEvCharging: boolean;
+}
+
+export interface CADRoom {
+  id: string;
+  name: string;
+  type: 'bedroom' | 'living' | 'kitchen' | 'bathroom' | 'alfresco' | 'office' | 'garage';
+  x: number; // in meters (grid units)
+  y: number; // in meters
+  width: number; // in meters
+  height: number; // in meters
+  color: string;
+  windows: number;
+  doors: number;
+}
+

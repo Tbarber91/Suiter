@@ -36,12 +36,15 @@ import {
   Wrench,
   CheckSquare,
   History,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Fuel,
+  QrCode,
+  Navigation
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Location, PortfolioItem, ServiceOffered, EngagedItem } from '@/lib/types';
+import { Location, PortfolioItem, ServiceOffered, EngagedItem, FuelCard, ServiceStation } from '@/lib/types';
 import { CreatePostModal } from './CreatePostModal';
 import { ListingDetailModal } from './ListingDetailModal';
 import { UserLoyaltyBadge } from './UserLoyaltyBadge';
@@ -50,13 +53,14 @@ import { getStoredTransactions, computeUserRatingOverview, recordTransaction } f
 import { LeaveReviewModal } from './LeaveReviewModal';
 import { RatingDisplay } from './RatingDisplay';
 import { MyAssetsDashboard } from './MyAssetsDashboard';
+import { ADELAIDE_SERVICE_STATIONS } from './PetrolRewardsModal';
 import { Coins } from 'lucide-react';
 
 interface UserProfileModalProps {
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   trigger?: React.ReactElement;
-  initialTab?: 'profile' | 'skills' | 'services' | 'portfolio' | 'listings' | 'transactions' | 'loyalty' | 'assets' | 'security';
+  initialTab?: 'profile' | 'skills' | 'services' | 'portfolio' | 'listings' | 'transactions' | 'loyalty' | 'assets' | 'security' | 'petrol';
 }
 
 const AVATAR_PRESETS = [
@@ -75,7 +79,34 @@ export function UserProfileModal({
   initialTab = 'profile',
 }: UserProfileModalProps) {
   const { user, updateProfile, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'profile' | 'listings' | 'transactions' | 'loyalty' | 'assets' | 'security'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'profile' | 'skills' | 'services' | 'portfolio' | 'listings' | 'transactions' | 'loyalty' | 'assets' | 'security' | 'petrol'>(initialTab);
+
+  // Petrol Fuel Cards State
+  const [fuelCards, setFuelCards] = useState<FuelCard[]>([
+    {
+      id: 'fc_shell_1',
+      provider: 'shell',
+      cardNumber: '7004 8821 9904 3182',
+      cardHolderName: user?.name || 'Verified Fleet Member',
+      pointsBalance: 4250,
+      discountPerLiterCents: 8,
+      tier: 'Platinum',
+      linkedDate: 'September 2026'
+    },
+    {
+      id: 'fc_mobil_1',
+      provider: 'mobil',
+      cardNumber: '6011 4902 8831 7712',
+      cardHolderName: user?.name || 'Fleet Driver',
+      pointsBalance: 2980,
+      discountPerLiterCents: 6,
+      tier: 'Smiles',
+      linkedDate: 'August 2026'
+    }
+  ]);
+  const [newFuelCardNum, setNewFuelCardNum] = useState('');
+  const [newFuelBrand, setNewFuelBrand] = useState<'shell' | 'mobil'>('shell');
+  const [activeFuelCardBarcode, setActiveFuelCardBarcode] = useState<FuelCard | null>(fuelCards[0]);
 
   // Form Fields
   const [name, setName] = useState('');
@@ -504,6 +535,7 @@ export function UserProfileModal({
             <div className="flex items-center gap-2 mt-5 border-t border-zinc-800/80 pt-4 overflow-x-auto pb-1 scrollbar-none">
               {[
                 { id: 'profile', label: 'Bio & Identity', icon: UserIcon },
+                { id: 'petrol', label: 'Petrol Rewards (Shell & Mobil)', icon: Fuel },
                 { id: 'skills', label: `Skills (${skills.length})`, icon: Wrench },
                 { id: 'services', label: `Services Provided (${services.length})`, icon: Tag },
                 { id: 'portfolio', label: `Portfolio (${portfolio.length})`, icon: ImageIcon },
@@ -1819,6 +1851,152 @@ export function UserProfileModal({
                     <LogOut className="w-3.5 h-3.5 mr-1" />
                     Sign Out Now
                   </Button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: Petrol Rewards (Shell & Mobil) */}
+            {activeTab === 'petrol' && (
+              <div className="space-y-6 max-w-3xl mx-auto">
+                {/* Banner */}
+                <div className="p-6 rounded-3xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-zinc-900 border border-amber-500/30 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-amber-500 text-zinc-950 flex items-center justify-center font-bold">
+                        <Fuel className="w-4 h-4" />
+                      </div>
+                      <h3 className="text-base font-bold text-zinc-900">
+                        Shell & Mobil Enterprise Fuel Rewards
+                      </h3>
+                    </div>
+                    <Badge className="bg-amber-500 text-zinc-950 font-bold text-[10px] uppercase">
+                      Live Adelaide Discounts
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-zinc-600 leading-relaxed">
+                    Link your commercial Shell Card or Mobil Rewards Smiles profile to automate fuel tax logging, collect points on trade mileage, and unlock digital pump discounts.
+                  </p>
+                </div>
+
+                {/* Linked Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {fuelCards.map((card) => {
+                    const isShell = card.provider === 'shell';
+                    const isSelected = activeFuelCardBarcode?.id === card.id;
+
+                    return (
+                      <div
+                        key={card.id}
+                        onClick={() => setActiveFuelCardBarcode(card)}
+                        className={`p-5 rounded-3xl relative overflow-hidden transition-all cursor-pointer border ${
+                          isShell
+                            ? 'bg-gradient-to-br from-amber-600 via-amber-700 to-zinc-950 border-amber-500/40 text-white'
+                            : 'bg-gradient-to-br from-blue-700 via-indigo-900 to-zinc-950 border-blue-500/40 text-white'
+                        } ${isSelected ? 'ring-2 ring-zinc-900 shadow-xl scale-[1.01]' : 'opacity-95 hover:opacity-100'}`}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <Fuel className="w-4 h-4 text-white" />
+                            <span className="font-display font-black tracking-wider text-sm uppercase">
+                              {isShell ? 'Shell Card • GO+' : 'Mobil Smiles • Fleet'}
+                            </span>
+                          </div>
+                          <Badge className="bg-white/20 text-white border-0 text-[9px] font-mono uppercase">
+                            {card.tier} Tier
+                          </Badge>
+                        </div>
+
+                        <div className="my-2 font-mono text-xs tracking-widest text-zinc-100">
+                          {card.cardNumber}
+                        </div>
+
+                        <div className="flex items-end justify-between pt-2 border-t border-white/20 text-xs">
+                          <div>
+                            <p className="text-[9px] uppercase font-mono opacity-80">Points Balance</p>
+                            <p className="text-lg font-bold font-mono text-white">
+                              {card.pointsBalance.toLocaleString()} <span className="text-[10px] font-normal opacity-80">pts</span>
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[9px] uppercase font-mono opacity-80">Discount Rate</p>
+                            <p className="text-sm font-bold font-mono text-emerald-300">
+                              {card.discountPerLiterCents}¢ / L off
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Digital Barcode Pump Scanner */}
+                {activeFuelCardBarcode && (
+                  <div className="p-5 bg-zinc-50 rounded-3xl border border-zinc-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-bold text-zinc-900 flex items-center gap-2">
+                          <QrCode className="w-4 h-4 text-amber-500" />
+                          Ready for Pump & Counter Scan
+                        </h4>
+                        <p className="text-[11px] text-zinc-500">
+                          Displaying barcode for {activeFuelCardBarcode.provider === 'shell' ? 'Shell Card' : 'Mobil Rewards'}.
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-emerald-700 bg-emerald-50 border-emerald-300 text-[10px] font-bold">
+                        {activeFuelCardBarcode.discountPerLiterCents}¢/L Active Saving
+                      </Badge>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-2xl border border-zinc-200 flex flex-col items-center justify-center space-y-2">
+                      <p className="text-zinc-900 font-mono text-xs font-bold tracking-widest">
+                        {activeFuelCardBarcode.cardNumber}
+                      </p>
+                      <div className="w-full max-w-xs h-12 flex items-stretch justify-center gap-[2px] bg-white px-2">
+                        {[3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 4, 1, 2, 3, 1, 4, 2, 1, 3, 2, 4, 1, 2, 3].map((w, i) => (
+                          <div key={i} className="bg-zinc-900" style={{ width: `${w * 2}px` }} />
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-zinc-500 font-mono">Present to service station console scanner</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Nearby Participating Adelaide Service Stations */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-600">
+                      Nearby Participating Stations (Adelaide Metro)
+                    </h4>
+                    <span className="text-[10px] text-zinc-400 font-mono">Real-time Fuel Prices</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {ADELAIDE_SERVICE_STATIONS.map((station) => (
+                      <div key={station.id} className="p-3.5 rounded-2xl bg-zinc-50 border border-zinc-200 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center ${
+                              station.brand === 'Shell' ? 'bg-amber-500 text-zinc-950' : 'bg-blue-600 text-white'
+                            }`}>
+                              {station.brand === 'Shell' ? 'S' : 'M'}
+                            </span>
+                            <div>
+                              <p className="text-xs font-bold text-zinc-900">{station.name}</p>
+                              <p className="text-[10px] text-zinc-500">{station.address}, {station.suburb}</p>
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="text-[9px] font-mono">
+                            {station.distanceKm} km
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] font-mono bg-white p-2 rounded-xl border border-zinc-100">
+                          <span>U91: <strong className="text-zinc-900">{station.unleaded91}¢</strong></span>
+                          <span>Diesel: <strong className="text-zinc-900">{station.diesel}¢</strong></span>
+                          <span>Prem: <strong className="text-amber-600">{station.vpowerOrSupreme}¢</strong></span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

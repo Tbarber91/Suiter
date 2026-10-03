@@ -8,12 +8,13 @@ import {
   signOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   updateProfile as updateFirebaseProfile
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
-import { PortfolioItem, ServiceOffered, EngagedItem } from '@/lib/types';
+import { PortfolioItem, ServiceOffered, EngagedItem, BankPayoutDetails } from '@/lib/types';
 
 export interface User {
   id: string;
@@ -34,12 +35,13 @@ export interface User {
   servicesProvided?: ServiceOffered[];
   portfolio?: PortfolioItem[];
   historyEngaged?: EngagedItem[];
+  bankDetails?: BankPayoutDetails;
 }
 
 export interface ProfileUpdateData {
-  name: string;
-  handle: string;
-  bio?: string;
+  name?: string;
+  handle?: string;
+    bio?: string;
   phone?: string;
   location?: string;
   avatarUrl?: string;
@@ -52,6 +54,7 @@ export interface ProfileUpdateData {
   servicesProvided?: ServiceOffered[];
   portfolio?: PortfolioItem[];
   historyEngaged?: EngagedItem[];
+  bankDetails?: BankPayoutDetails;
 }
 
 interface AuthContextType {
@@ -68,6 +71,7 @@ interface AuthContextType {
     location?: string,
     avatarUrl?: string
   ) => Promise<{ success: boolean; error?: string }>;
+  sendPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   updateProfile: (data: ProfileUpdateData) => Promise<void>;
   switchRole: (role: 'admin' | 'management' | 'investor' | 'user') => void;
@@ -334,6 +338,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const sendPasswordReset = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      return { success: true };
+    } catch (err: any) {
+      console.error("Firebase sendPasswordResetEmail error:", err);
+      let message = "Failed to send password reset email.";
+      if (err.code === 'auth/user-not-found') message = "No account found registered with this email.";
+      else if (err.code === 'auth/invalid-email') message = "Invalid email format.";
+      else if (err.message) message = err.message;
+      return { success: false, error: message };
+    }
+  };
+
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     try {
@@ -435,10 +453,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateProfile = async (data: ProfileUpdateData) => {
     if (!user) return;
-    const formattedHandle = data.handle.startsWith('@') ? data.handle : `@${data.handle}`;
+    const formattedHandle = data.handle
+      ? (data.handle.startsWith('@') ? data.handle : `@${data.handle}`)
+      : user.handle;
     const updatedUser: User = {
       ...user,
-      name: data.name,
+      name: data.name ?? user.name,
       handle: formattedHandle,
       bio: data.bio ?? user.bio,
       phone: data.phone ?? user.phone,
@@ -476,6 +496,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginWithGoogle, 
       signInWithEmail, 
       signUpWithEmail, 
+      sendPasswordReset,
       logout, 
       updateProfile, 
       switchRole, 

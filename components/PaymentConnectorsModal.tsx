@@ -162,9 +162,13 @@ export function PaymentConnectorsModal({
   return (
     <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
       {trigger ? (
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <span onClick={() => setModalOpen(true)} className="inline-flex cursor-pointer">
+          {trigger}
+        </span>
       ) : children ? (
-        <DialogTrigger asChild>{children}</DialogTrigger>
+        <span onClick={() => setModalOpen(true)} className="inline-flex cursor-pointer">
+          {children}
+        </span>
       ) : null}
 
       <DialogContent className="max-w-4xl max-h-[92vh] flex flex-col p-0 overflow-hidden bg-white border border-zinc-200/90 rounded-[2.5rem] shadow-2xl font-sans">

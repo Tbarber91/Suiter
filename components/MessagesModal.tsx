@@ -53,6 +53,32 @@ export function MessagesModal({ isOpen, onClose, onOpenChat }: MessagesModalProp
     return () => unsubscribe();
   }, [isOpen, user]);
 
+  const [archivedPartners, setArchivedPartners] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('suiter_archived_chats');
+        return saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
+  const [activeTab, setActiveTab] = useState<'active' | 'archived'>('active');
+
+  const toggleArchive = (e: React.MouseEvent, partnerId: string) => {
+    e.stopPropagation();
+    setArchivedPartners(prev => {
+      const next = prev.includes(partnerId)
+        ? prev.filter(id => id !== partnerId)
+        : [...prev, partnerId];
+      try {
+        localStorage.setItem('suiter_archived_chats', JSON.stringify(next));
+      } catch (err) {}
+      return next;
+    });
+  };
+
   const conversationsMap = new Map<string, ChatMessage[]>();
   messages.forEach(msg => {
     const partner = msg.senderId === user?.id ? msg.recipientId : msg.senderId;
@@ -62,11 +88,15 @@ export function MessagesModal({ isOpen, onClose, onOpenChat }: MessagesModalProp
     conversationsMap.get(partner)!.push(msg);
   });
 
-  const conversationPartners = Array.from(conversationsMap.entries());
+  const allConversationPartners = Array.from(conversationsMap.entries());
+  const conversationPartners = allConversationPartners.filter(([partnerId]) => {
+    const isArchived = archivedPartners.includes(partnerId);
+    return activeTab === 'archived' ? isArchived : !isArchived;
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] rounded-[2.5rem] p-0 border-0 overflow-hidden shadow-2xl bg-white">
+      <DialogContent className="sm:max-w-[620px] rounded-[2.5rem] p-0 border-0 overflow-hidden shadow-2xl bg-white">
         <div className="p-6 bg-zinc-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg">
@@ -74,7 +104,9 @@ export function MessagesModal({ isOpen, onClose, onOpenChat }: MessagesModalProp
             </div>
             <div>
               <h2 className="text-xl font-display font-bold tracking-tight">Messages Inbox</h2>
-              <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Active conversations & inquiries</p>
+              <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
+                Real-Time encrypted in-app messaging
+              </p>
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full text-white hover:bg-white/10">
@@ -82,18 +114,51 @@ export function MessagesModal({ isOpen, onClose, onOpenChat }: MessagesModalProp
           </Button>
         </div>
 
+        {/* Tab switch: Active vs Archived */}
+        <div className="flex items-center gap-2 px-6 pt-4 pb-2 bg-zinc-50 border-b border-zinc-200">
+          <button
+            type="button"
+            onClick={() => setActiveTab('active')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'active'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'text-zinc-600 hover:bg-zinc-200/60'
+            }`}
+          >
+            Active ({allConversationPartners.filter(([id]) => !archivedPartners.includes(id)).length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('archived')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'archived'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'text-zinc-600 hover:bg-zinc-200/60'
+            }`}
+          >
+            Archived ({archivedPartners.length})
+          </button>
+        </div>
+
         <ScrollArea className="h-[400px] p-6 bg-zinc-50/50">
           <div className="space-y-4">
             {conversationPartners.length === 0 ? (
               <div className="text-center py-16">
                 <MessageSquare className="w-12 h-12 text-zinc-300 mx-auto mb-3 animate-pulse" />
-                <p className="text-sm font-bold text-zinc-700">No conversations yet</p>
-                <p className="text-xs text-zinc-400 mt-1">Initiate a message from any listing or service page to start chatting.</p>
+                <p className="text-sm font-bold text-zinc-700">
+                  {activeTab === 'archived' ? 'No archived conversations' : 'No active conversations yet'}
+                </p>
+                <p className="text-xs text-zinc-400 mt-1">
+                  {activeTab === 'archived'
+                    ? 'Conversations you archive will be stored here.'
+                    : 'Initiate a message from any listing or service page to start chatting.'}
+                </p>
               </div>
             ) : (
               conversationPartners.map(([partnerId, msgs]) => {
                 const lastMsg = msgs[0];
                 const displayName = lastMsg.senderId === user?.id ? lastMsg.recipientId : lastMsg.senderName;
+                const isArchived = archivedPartners.includes(partnerId);
                 return (
                   <div
                     key={partnerId}
@@ -121,9 +186,19 @@ export function MessagesModal({ isOpen, onClose, onOpenChat }: MessagesModalProp
                         <p className="text-xs text-zinc-500 line-clamp-1 mt-0.5 font-medium">{lastMsg.text}</p>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-[10px] font-bold text-zinc-400">{lastMsg.timestamp}</span>
-                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-zinc-400">{lastMsg.timestamp}</span>
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => toggleArchive(e, partnerId)}
+                        className="text-[10px] font-semibold text-zinc-400 hover:text-indigo-600 px-2 py-0.5 rounded-lg hover:bg-zinc-100 transition-colors"
+                        title={isArchived ? "Unarchive conversation" : "Archive conversation"}
+                      >
+                        {isArchived ? 'Unarchive' : 'Archive'}
+                      </button>
                     </div>
                   </div>
                 );

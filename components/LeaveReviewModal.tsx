@@ -26,12 +26,15 @@ import { db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
 interface LeaveReviewModalProps {
+  onClose?: () => void;
+  listingId?: string;
+  listingTitle?: string;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   trigger?: React.ReactElement;
   transaction?: Transaction | null;
   listing?: Location | null;
-  onReviewSubmitted?: (review: Review, transaction: Transaction | null) => void;
+  onReviewSubmitted?: (review: Review, transaction?: any) => void;
 }
 
 const STAR_LABELS: Record<number, { title: string; desc: string; color: string }> = {
@@ -45,6 +48,7 @@ const STAR_LABELS: Record<number, { title: string; desc: string; color: string }
 export function LeaveReviewModal({
   isOpen,
   onOpenChange,
+  onClose,
   trigger,
   transaction,
   listing,
@@ -139,8 +143,12 @@ export function LeaveReviewModal({
     }
   };
 
+  const handleClose = (open: boolean) => {
+    onOpenChange?.(open);
+    if (!open && onClose) onClose();
+  };
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       {trigger && <DialogTrigger render={trigger} />}
       <DialogContent className="sm:max-w-[620px] rounded-[2.5rem] border-0 glass p-0 max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
         {/* Header */}

@@ -1,0 +1,41 @@
+{
+  "name": "Suiter — Enterprise Marketplace & Media Platform",
+  "short_name": "Suiter",
+  "description": "Enterprise marketplace, verified trade services, and Apple & Android advertising media platform.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "orientation": "portrait",
+  "categories": ["business", "shopping", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Search Tradies & Home Services",
+      "url": "/?category=Trades+%26+Home+Services",
+      "description": "Find licensed electricians, plumbers, and carpenters"
+    },
+    {
+      "name": "Cars & Vehicles (PPSR Verified)",
+      "url": "/?category=Cars+%26+Automotive",
+      "description": "Inspect registered cars with PPSR security checks"
+    },
+    {
+      "name": "Petrol Rewards Discounts",
+      "url": "/?modal=petrol",
+      "description": "Mobil 8¢/L & Shell 6¢/L fuel vouchers"
+    },
+    {
+      "name": "Encrypted Messages",
+      "url": "/?modal=messages",
+      "description": "Direct buyer and seller messaging"
+    }
+  ]
+}

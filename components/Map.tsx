@@ -27,6 +27,16 @@ import { AppleMapsAdModal } from './AppleMapsAdModal';
 import { computeRatingStats } from '@/lib/transactions';
 import { ADELAIDE_SERVICE_STATIONS } from './PetrolRewardsModal';
 import { ServiceStation } from '@/lib/types';
+import { 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  Tooltip as RechartsTooltip, 
+  Cell, 
+  CartesianGrid 
+} from 'recharts';
 
 interface MapProps {
   locations: Location[];
@@ -337,6 +347,36 @@ export default function Map({
   const highDemandCount = heatClusters.filter(c => c.demandTier === 'high').length;
   const moderateCount = heatClusters.filter(c => c.demandTier === 'moderate').length;
 
+  const [insightsTab, setInsightsTab] = useState<'chart' | 'list'>('chart');
+
+  // Activity Heatmap dataset for Recharts visualization
+  const heatmapChartData = useMemo(() => {
+    return SUBURB_ANCHORS.map((anchor) => {
+      const nearby = locations.filter(loc => {
+        const dLat = Math.abs(loc.lat - anchor.lat);
+        const dLng = Math.abs(loc.lng - anchor.lng);
+        return dLat < 0.045 && dLng < 0.045;
+      });
+      const listingsCount = nearby.length;
+      const searchVolume = Math.min(99, Math.max(24, listingsCount * 26 + (anchor.name.includes('CBD') ? 35 : anchor.name.includes('Norwood') ? 22 : 14)));
+      const shortName = anchor.name.split('&')[0].trim().replace(' Precinct', '').replace(' District', '');
+      
+      let fill = '#10b981'; // emerging
+      if (listingsCount >= 3 || searchVolume >= 75) fill = '#ef4444'; // high
+      else if (listingsCount >= 2 || searchVolume >= 50) fill = '#f59e0b'; // moderate
+
+      return {
+        suburb: shortName,
+        fullName: anchor.name,
+        searches: searchVolume,
+        listings: listingsCount,
+        lat: anchor.lat,
+        lng: anchor.lng,
+        fill
+      };
+    }).sort((a, b) => b.searches - a.searches);
+  }, [locations]);
+
   return (
     <div className="relative w-full h-full">
       {/* Top Map Control Bar */}
@@ -346,8 +386,8 @@ export default function Map({
           <AppleMapsAdModal
             onAdCreated={(newLoc) => {
               if (onAdCreated) onAdCreated(newLoc);
-              setActiveMapCenter([newLoc.lat, newLoc.lng]);
-              setActiveZoom(15);
+              setManualCenter([newLoc.lat, newLoc.lng]);
+              setManualZoom(15);
             }}
             trigger={
               <button
@@ -466,9 +506,9 @@ export default function Map({
         )}
       </div>
 
-      {/* Floating Map Insights Overlay Dashboard */}
+      {/* Floating Map Insights Overlay Dashboard with Recharts Heatmap */}
       {showMapInsights && (
-        <div className="absolute top-20 left-6 z-[400] w-80 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-rose-200/60 p-5 space-y-4 animate-in fade-in slide-in-from-left-4 duration-300">
+        <div className="absolute top-20 left-6 z-[400] w-[390px] max-w-[calc(100vw-3rem)] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-rose-200/60 p-5 space-y-3.5 animate-in fade-in slide-in-from-left-4 duration-300">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center">
@@ -476,10 +516,10 @@ export default function Map({
               </div>
               <div>
                 <h4 className="text-sm font-display font-black text-zinc-900 tracking-tight">
-                  Map Insights
+                  Adelaide Activity Heatmap
                 </h4>
                 <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
-                  Demand Density Hotspots
+                  Popular Search Regions at a Glance
                 </p>
               </div>
             </div>
@@ -512,40 +552,133 @@ export default function Map({
             </div>
           </div>
 
-          {/* Hotspot List */}
-          <div className="space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block">
-              Active Service Density Hotspots
-            </span>
-
-            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-              {heatClusters.map(cluster => (
-                <div 
-                  key={cluster.id}
-                  onClick={() => {
-                    setManualCenter([cluster.lat, cluster.lng]);
-                    setManualZoom(14);
-                  }}
-                  className="p-2.5 rounded-xl bg-white hover:bg-zinc-50 border border-zinc-200/80 hover:border-zinc-300 transition-all cursor-pointer flex items-center justify-between group"
-                >
-                  <div className="flex items-center gap-2">
-                    <span 
-                      className="w-2.5 h-2.5 rounded-full shrink-0" 
-                      style={{ backgroundColor: cluster.color }} 
-                    />
-                    <div className="truncate max-w-[170px]">
-                      <div className="text-xs font-bold text-zinc-900 truncate">{cluster.name}</div>
-                      <div className="text-[9px] text-zinc-500 font-medium">Top: {cluster.topCategory}</div>
-                    </div>
-                  </div>
-
-                  <span className="text-[10px] font-black font-mono px-2 py-0.5 rounded-md bg-zinc-100 group-hover:bg-zinc-900 group-hover:text-white transition-colors">
-                    {cluster.count} {cluster.count === 1 ? 'Listing' : 'Listings'}
-                  </span>
-                </div>
-              ))}
-            </div>
+          {/* Tab Selector */}
+          <div className="flex bg-zinc-100 p-1 rounded-xl gap-1">
+            <button
+              onClick={() => setInsightsTab('chart')}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                insightsTab === 'chart'
+                  ? 'bg-white text-zinc-900 shadow-sm'
+                  : 'text-zinc-600 hover:text-zinc-900'
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5 text-rose-600" />
+              <span>Activity Chart (Recharts)</span>
+            </button>
+            <button
+              onClick={() => setInsightsTab('list')}
+              className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                insightsTab === 'list'
+                  ? 'bg-white text-zinc-900 shadow-sm'
+                  : 'text-zinc-600 hover:text-zinc-900'
+              }`}
+            >
+              <Flame className="w-3.5 h-3.5 text-amber-500" />
+              <span>Hotspot List</span>
+            </button>
           </div>
+
+          {insightsTab === 'chart' ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                <span>Search Popularity Index</span>
+                <span className="text-indigo-600 font-bold">Tap bar to focus map</span>
+              </div>
+              <div className="h-44 w-full bg-white rounded-2xl border border-zinc-200/80 p-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={heatmapChartData} margin={{ top: 8, right: 10, left: -25, bottom: 25 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
+                    <XAxis 
+                      dataKey="suburb" 
+                      tick={{ fontSize: 9, fill: '#71717a' }} 
+                      angle={-35} 
+                      textAnchor="end" 
+                      interval={0}
+                      height={40}
+                    />
+                    <YAxis 
+                      domain={[0, 100]} 
+                      tick={{ fontSize: 9, fill: '#71717a' }} 
+                    />
+                    <RechartsTooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-zinc-950 text-white text-[11px] rounded-xl p-2.5 shadow-xl border border-zinc-800">
+                              <p className="font-bold text-white mb-1">{data.fullName}</p>
+                              <div className="flex items-center justify-between gap-3 text-zinc-300">
+                                <span>Search Activity:</span>
+                                <span className="font-mono font-bold text-amber-400">{data.searches}/100</span>
+                              </div>
+                              <div className="flex items-center justify-between gap-3 text-zinc-300">
+                                <span>Active Listings:</span>
+                                <span className="font-mono font-bold text-emerald-400">{data.listings}</span>
+                              </div>
+                              <p className="text-[9px] text-zinc-400 mt-1 italic">Click bar to jump & zoom</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar 
+                      dataKey="searches" 
+                      radius={[6, 6, 0, 0]}
+                      onClick={(entry: any) => {
+                        if (entry && entry.lat && entry.lng) {
+                          setManualCenter([entry.lat, entry.lng]);
+                          setManualZoom(14);
+                        }
+                      }}
+                      cursor="pointer"
+                    >
+                      {heatmapChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-[10px] text-center text-zinc-500">
+                Peak Hotspot: <strong className="text-zinc-900">{heatmapChartData[0]?.suburb} ({heatmapChartData[0]?.searches}%)</strong> • Click bar to navigate
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block">
+                Active Service Density Hotspots
+              </span>
+
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {heatClusters.map(cluster => (
+                  <div 
+                    key={cluster.id}
+                    onClick={() => {
+                      setManualCenter([cluster.lat, cluster.lng]);
+                      setManualZoom(14);
+                    }}
+                    className="p-2.5 rounded-xl bg-white hover:bg-zinc-50 border border-zinc-200/80 hover:border-zinc-300 transition-all cursor-pointer flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className="w-2.5 h-2.5 rounded-full shrink-0" 
+                        style={{ backgroundColor: cluster.color }} 
+                      />
+                      <div className="truncate max-w-[170px]">
+                        <div className="text-xs font-bold text-zinc-900 truncate">{cluster.name}</div>
+                        <div className="text-[9px] text-zinc-500 font-medium">Top: {cluster.topCategory}</div>
+                      </div>
+                    </div>
+
+                    <span className="text-[10px] font-black font-mono px-2 py-0.5 rounded-md bg-zinc-100 group-hover:bg-zinc-900 group-hover:text-white transition-colors">
+                      {cluster.count} {cluster.count === 1 ? 'Listing' : 'Listings'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

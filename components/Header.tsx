@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from './AuthProvider';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -33,7 +34,9 @@ import { PaymentConnectorsModal } from './PaymentConnectorsModal';
 import { VoiceSearchButton } from './VoiceSearchButton';
 import { BuildingPlanCADStudioModal } from './BuildingPlanCADStudioModal';
 import { PetrolRewardsModal } from './PetrolRewardsModal';
-import { BookOpen, Calendar, Printer, Mail, Users, CreditCard, Rocket, X, Menu, Compass, Fuel } from 'lucide-react';
+import { DriverOperationsModal } from './DriverOperationsModal';
+import { CloudAndPilotModal } from './CloudAndPilotModal';
+import { BookOpen, Calendar, Printer, Mail, Users, CreditCard, Rocket, X, Menu, Compass, Fuel, Car, Plane } from 'lucide-react';
 
 interface HeaderProps {
   searchQuery?: string;
@@ -321,6 +324,39 @@ export function Header({ searchQuery = '', onSearchChange }: HeaderProps = {}) {
             }
           />
 
+          {/* Driver OS: Service SA & PPSR Check */}
+          <DriverOperationsModal
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden xl:flex rounded-2xl h-10 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/70 text-indigo-950 transition-all items-center gap-1.5 cursor-pointer text-xs font-bold shadow-xs"
+                title="Driver OS: Courier Dispatch, Service SA Rego & PPSR Stolen Vehicle Policing"
+              >
+                <Car className="w-4 h-4 text-indigo-600" />
+                <span>Driver OS</span>
+                <span className="bg-indigo-600 text-white font-mono text-[9px] px-1.5 py-0.5 rounded font-black tracking-wider">
+                  Service SA
+                </span>
+              </Button>
+            }
+          />
+
+          {/* Pilot & Private Cloud Services */}
+          <CloudAndPilotModal
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden lg:flex rounded-2xl h-10 border-cyan-300 bg-cyan-50/60 hover:bg-cyan-100/70 text-cyan-950 transition-all items-center gap-1.5 cursor-pointer text-xs font-bold shadow-xs"
+                title="Autonomous Marketplace Pilot, Google Cloud Run & Apple Private Cloud Compute"
+              >
+                <Compass className="w-4 h-4 text-cyan-600" />
+                <span>Pilot & Cloud</span>
+              </Button>
+            }
+          />
+
           {!isAuthReady ? (
             <div className="h-10 w-20 animate-pulse bg-muted rounded-2xl" />
           ) : user ? (
@@ -354,6 +390,14 @@ export function Header({ searchQuery = '', onSearchChange }: HeaderProps = {}) {
                 <span className="hidden md:inline">Messages</span>
                 <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
               </Button>
+              <Link
+                href="/profile"
+                className="hidden xl:flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-zinc-100 hover:bg-zinc-200 text-xs font-bold text-zinc-800 transition-colors"
+                title="Open Dedicated Full-Screen Profile & Posted Ads Management"
+              >
+                <UserIcon className="w-4 h-4 text-indigo-600" />
+                <span>/profile</span>
+              </Link>
               <UserProfileModal
                 isOpen={isProfileOpen}
                 onOpenChange={setIsProfileOpen}
@@ -473,6 +517,44 @@ export function Header({ searchQuery = '', onSearchChange }: HeaderProps = {}) {
                     <div>
                       <p className="text-xs font-bold text-amber-950">Petrol Rewards</p>
                       <p className="text-[10px] text-amber-800">Shell & Mobil Cards</p>
+                    </div>
+                  </button>
+                }
+              />
+
+              {/* Driver OS Mobile */}
+              <DriverOperationsModal
+                trigger={
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-3 rounded-2xl bg-indigo-50 border border-indigo-200 text-left hover:bg-indigo-100 transition-all cursor-pointer flex flex-col justify-between"
+                  >
+                    <div className="w-7 h-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center mb-1.5 shadow-xs">
+                      <Car className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-indigo-950">Driver OS</p>
+                      <p className="text-[10px] text-indigo-700">Courier & Service SA</p>
+                    </div>
+                  </button>
+                }
+              />
+
+              {/* Pilot & Cloud Mobile */}
+              <CloudAndPilotModal
+                trigger={
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-3 rounded-2xl bg-cyan-50 border border-cyan-200 text-left hover:bg-cyan-100 transition-all cursor-pointer flex flex-col justify-between"
+                  >
+                    <div className="w-7 h-7 rounded-xl bg-cyan-600 text-white flex items-center justify-center mb-1.5 shadow-xs">
+                      <Compass className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-cyan-950">Pilot & Cloud</p>
+                      <p className="text-[10px] text-cyan-700">Autopilot & SLA</p>
                     </div>
                   </button>
                 }

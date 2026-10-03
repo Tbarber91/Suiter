@@ -131,6 +131,7 @@ export function InstantBookingModal({
       listingType: 'service',
       listingPrice: listingPrice || activeCategoryData.deposit,
       sellerName: 'Marcus Vance (BLD 294810)',
+      buyerId: customerEmail || 'guest-buyer',
       buyerName: customerName,
       buyerEmail: customerEmail,
       amount: activeCategoryData.deposit,

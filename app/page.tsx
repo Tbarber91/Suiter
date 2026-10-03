@@ -383,7 +383,7 @@ export default function Home() {
     if (sortBy === 'rating_desc') {
       return (b.rating || 0) - (a.rating || 0);
     }
-    if (sortBy === 'date_oldest') {
+    if (sortBy === 'date_asc') {
       return 1; // preserved initial order
     }
     // date_desc by default
@@ -1089,7 +1089,11 @@ export default function Home() {
         {/* Figma Design System & Flow Control Panel */}
         <FigmaDesignToolbar />
 
-        <AIAssistant />
+        <AIAssistant
+          onSearchQuery={(q) => setSearchQuery(q)}
+          onSelectCategory={(cat) => setSelectedCategories([cat])}
+          onFilterType={(t) => setActiveFilter(t as any)}
+        />
         <AcknowledgementFooter />
 
         <ListingDetailModal 

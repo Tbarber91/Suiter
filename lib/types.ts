@@ -1,3 +1,8 @@
+export interface PriceHistoryPoint {
+  date: string;
+  price: number;
+}
+
 export interface ReviewAspects {
   communication?: number;
   quality?: number;
@@ -17,6 +22,7 @@ export interface Review {
   date: string;
   verifiedTransaction?: boolean;
   aspectRatings?: ReviewAspects;
+  aspects?: ReviewAspects;
 }
 
 export interface Transaction {
@@ -70,6 +76,7 @@ export interface EngagedItem {
   date: string;
   status: 'active' | 'completed' | 'inquiry';
   price?: string;
+  priceHistory?: number[];
 }
 
 export interface SocialLinks {
@@ -134,6 +141,7 @@ export interface Location {
   description: string;
   type: 'ad' | 'service' | 'product' | 'shop';
   price?: string;
+  priceHistory?: number[];
   rating?: number | null;
   image?: string;
   isNew?: boolean;
@@ -155,7 +163,7 @@ export interface Location {
   isVerifiedExperience?: boolean;
   locationName?: string;
   isAppleMapsSponsored?: boolean;
-  appleMapsAdTier?: 'sponsored_pin' | 'top_placement' | 'turn_by_turn';
+  appleMapsAdTier?: 'sponsored_pin' | 'top_placement' | 'turn_by_turn' | 'direct_pin';
   appleMapsBadge?: string;
   businessName?: string;
   address?: string;

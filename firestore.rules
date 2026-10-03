@@ -51,7 +51,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isOwner(userId) && isValidUser(incoming());
       allow update: if isOwner(userId) && isValidUser(incoming())
-        && incoming().diff(existing()).affectedKeys().hasAny(['name', 'email', 'avatarUrl', 'handle', 'bio', 'phone', 'location', 'role', 'isCertified', 'isRegulatoryCompliant', 'isVerifiedExperience', 'isGateLocked', 'encryptedAuthToken', 'skills', 'servicesProvided', 'portfolio', 'historyEngaged']);
+        && incoming().diff(existing()).affectedKeys().hasAny(['name', 'email', 'avatarUrl', 'handle', 'bio', 'phone', 'location', 'role', 'isCertified', 'isRegulatoryCompliant', 'isVerifiedExperience', 'isGateLocked', 'encryptedAuthToken', 'skills', 'servicesProvided', 'portfolio', 'historyEngaged', 'bankDetails']);
       allow delete: if isOwner(userId);
     }
 

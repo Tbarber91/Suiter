@@ -274,8 +274,13 @@ export function AutomatedInvoicingModal({
     e.preventDefault();
     if (!clientName.trim() || items.length === 0) return;
 
+    // eslint-disable-next-line react-hooks/purity
+    const currentTimestamp = Date.now();
+    // eslint-disable-next-line react-hooks/purity
+    const calculatedDueDate = new Date(currentTimestamp + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
     const newInv: AutoInvoice = {
-      id: `inv-auto-${Date.now()}`,
+      id: `inv-auto-${currentTimestamp}`,
       invoiceNumber: `INV-AUTO-2026-0${invoices.length + 1}`,
       clientName: clientName.trim(),
       clientEmail: clientEmail.trim() || 'billing@client.com.au',
@@ -285,7 +290,7 @@ export function AutomatedInvoicingModal({
       total: currentTotal,
       btcAmount: currentBtc,
       issueDate: new Date().toISOString().split('T')[0],
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      dueDate: calculatedDueDate,
       scheduleType,
       status: scheduleType === 'milestone' ? 'scheduled' : 'sent',
       autoReminderEnabled: reminderActive,

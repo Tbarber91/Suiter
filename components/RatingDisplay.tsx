@@ -6,6 +6,8 @@ import { Review } from '@/lib/types';
 import { computeRatingStats } from '@/lib/transactions';
 
 interface RatingDisplayProps {
+  stats?: any;
+  onOpenReviewModal?: () => void;
   reviews?: Review[];
   fallbackRating?: number | null;
   size?: 'sm' | 'md' | 'lg';
@@ -16,13 +18,17 @@ interface RatingDisplayProps {
 
 export function RatingDisplay({
   reviews,
+  stats: customStats,
+  onOpenReviewModal,
   fallbackRating = 5.0,
   size = 'md',
   showCount = true,
   showBreakdown = false,
   className = ''
 }: RatingDisplayProps) {
-  const stats = computeRatingStats(reviews, fallbackRating);
+  const computed = computeRatingStats(reviews, fallbackRating);
+  const stats = customStats || computed;
+  const isBreakdown = showBreakdown || !!customStats || !!onOpenReviewModal;
 
   const starSizes = {
     sm: 'w-3 h-3',
@@ -36,7 +42,7 @@ export function RatingDisplay({
     lg: 'text-2xl font-display font-bold'
   };
 
-  if (!showBreakdown) {
+  if (!isBreakdown) {
     return (
       <div className={`flex items-center gap-1.5 ${className}`}>
         <div className="flex items-center gap-0.5">

@@ -39,7 +39,8 @@ import {
   Image as ImageIcon,
   Fuel,
   QrCode,
-  Navigation
+  Navigation,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
